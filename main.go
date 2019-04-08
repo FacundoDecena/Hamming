@@ -3,12 +3,14 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"strconv"
 	"strings"
-	//"math/bits"
+	"time"
 )
 
 func main() {
+	start := time.Now()
 	var fileName string
 	var encodedBody []byte
 
@@ -20,7 +22,7 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	} else {
-
+		start = time.Now()
 		encodedBody = hamming7(body)
 
 		err = saveFile("encoded"+fileName, encodedBody)
@@ -29,10 +31,13 @@ func main() {
 		}
 
 	}
+	elapsed := time.Since(start)
+	log.Printf("Hamming7 took %s", elapsed)
 }
 
 // Receives a byte slice, returns it encoded
 func hamming7(file []byte) []byte {
+	//TODO: optimize routines, learn goroutines?
 	//Mask that shows first bits
 	maskFirst := 240
 	//Mask that shows last bits
@@ -48,6 +53,7 @@ func hamming7(file []byte) []byte {
 		maskedLast := file[i] & uint8(maskLast)
 
 		//Convert int to byte slices
+		//TODO: Apply concurrency on this functions
 		slicedFirst := parceByte(int8(maskedFirst))
 		slicedLast := parceByte(int8(maskedLast))
 
