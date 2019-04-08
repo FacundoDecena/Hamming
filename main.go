@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"log"
 	"strconv"
-	"strings"
 	"time"
 	//"www.github.com/willf/bitset.git"
 )
@@ -38,7 +37,6 @@ func main() {
 
 // Receives a byte slice, returns it encoded
 func hamming7(file []byte) []byte {
-	//TODO: optimize routines, learn goroutines?
 	//Mask that shows first bits
 	maskFirst := 240
 	//Mask that shows last bits
@@ -54,7 +52,6 @@ func hamming7(file []byte) []byte {
 		maskedLast := file[i] & uint8(maskLast)
 
 		//Convert int to byte slices
-		//TODO: Apply concurrency on this functions
 		slicedFirst := parceByte(int8(maskedFirst))
 		slicedLast := parceByte(int8(maskedLast))
 
@@ -83,13 +80,11 @@ func parceByte(maskedByte int8) [7]int {
 }
 
 func deParceByte(encoded [7]int) int8 {
-	sliceLen := len(encoded)
-	var encodedStringSlice []string
-	for i := 0; i < sliceLen; i++ {
-		encodedStringSlice = append(encodedStringSlice, strconv.Itoa(encoded[i]))
+	encodedString := ""
+	for i := 0; i < 7; i++ {
+		encodedString = strconv.Itoa(encoded[i])
 	}
-	encodedString := strings.Join([]string(encodedStringSlice), "")
-	ret, _ := ParseInt(encodedString, 2, 64)
+	ret, _ := ParseInt(encodedString, 2, 8)
 	return ret
 }
 
