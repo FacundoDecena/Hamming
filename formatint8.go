@@ -15,7 +15,7 @@ const fastSmalls = true // enable fast path for small integers
 // FormatInt8 returns the string representation of i in the given base,
 // for 2 <= base <= 36. The result uses the lower-case letters 'a' to 'z'
 // for digit values >= 10.
-func FormatInt8(i int8, base int) string {
+func FormatInt(i int8, base int) string {
 	if fastSmalls && 0 <= i && i < nSmalls && base == 10 {
 		return small(int(i))
 	}

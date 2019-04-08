@@ -6,11 +6,9 @@ import (
 	"log"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
+	//"www.github.com/willf/bitset.git"
 )
-
-var wg sync.WaitGroup
 
 func main() {
 	start := time.Now()
@@ -41,8 +39,6 @@ func main() {
 // Receives a byte slice, returns it encoded
 func hamming7(file []byte) []byte {
 	//TODO: optimize routines, learn goroutines?
-	ch1 := make(chan [7]int)
-	ch2 := make(chan [7]int)
 	//Mask that shows first bits
 	maskFirst := 240
 	//Mask that shows last bits
@@ -50,7 +46,6 @@ func hamming7(file []byte) []byte {
 	//Encoded byte slice
 	var ret []byte
 	for i := 0; i < len(file); i++ {
-		defer wg.Add(2)
 		//Add mask
 		maskedFirst := file[i] & uint8(maskFirst)
 		//Move to last positions
@@ -59,56 +54,42 @@ func hamming7(file []byte) []byte {
 		maskedLast := file[i] & uint8(maskLast)
 
 		//Convert int to byte slices
-
-		go func() {
-			stringByte := FormatInt8(int8(maskedFirst), 2)
-			//Convert stringByte to a slice
-			sliceSB := []byte(stringByte)
-			var ret [7]int
-			sliceLen := len(sliceSB)
-			for i := sliceLen - 1; i >= 0; i-- {
-				//Convert strings to int in all positions
-				ret[7-sliceLen+i], _ = strconv.Atoi(string(sliceSB[i]))
-			}
-			ch1 <- ret
-			defer wg.Done()
-		}()
-		go func() {
-			stringByte := FormatInt8(int8(maskedLast), 2)
-			//Convert stringByte to a slice
-			sliceSB := []byte(stringByte)
-			var ret [7]int
-			sliceLen := len(sliceSB)
-			for i := sliceLen - 1; i >= 0; i-- {
-				//Convert strings to int in all positions
-				ret[7-sliceLen+i], _ = strconv.Atoi(string(sliceSB[i]))
-			}
-			ch2 <- ret
-			defer wg.Done()
-		}()
-		slicedFirst := <-ch1
-		slicedLast := <-ch2
-		wg.Wait()
-
 		//TODO: Apply concurrency on this functions
+		slicedFirst := parceByte(int8(maskedFirst))
+		slicedLast := parceByte(int8(maskedLast))
+
 		//Encode with hamming 7 both parts
 		slicedFirst, slicedLast = encode(slicedFirst, slicedLast)
 
-		ret = append(ret, byte(deParseByte(slicedFirst)))
-		ret = append(ret, byte(deParseByte(slicedLast)))
+		ret = append(ret, byte(deParceByte(slicedFirst)))
+		ret = append(ret, byte(deParceByte(slicedLast)))
 
 	}
 	return ret
 }
 
-func deParseByte(encoded [7]int) int8 {
+func parceByte(maskedByte int8) [7]int {
+	//Convert maskedByte to a string with its binary representation
+	stringByte := FormatInt(maskedByte, 2)
+	//Convert stringByte to a slice
+	sliceSB := []byte(stringByte)
+	var ret [7]int
+	sliceLen := len(sliceSB)
+	for i := sliceLen - 1; i >= 0; i-- {
+		//Convert strings to int in all positions
+		ret[7-sliceLen+i], _ = strconv.Atoi(string(sliceSB[i]))
+	}
+	return ret
+}
+
+func deParceByte(encoded [7]int) int8 {
 	sliceLen := len(encoded)
 	var encodedStringSlice []string
 	for i := 0; i < sliceLen; i++ {
 		encodedStringSlice = append(encodedStringSlice, strconv.Itoa(encoded[i]))
 	}
 	encodedString := strings.Join([]string(encodedStringSlice), "")
-	ret, _ := ParseInt(encodedString, 2, 8)
+	ret, _ := ParseInt(encodedString, 2, 64)
 	return ret
 }
 
