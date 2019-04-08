@@ -3,13 +3,14 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"strconv"
+	"strings"
 	//"math/bits"
 )
 
 func main() {
 	var fileName string
-	maskFirst := 240
-	maskLast := 15
+	var encodedBody []byte
 
 	fmt.Println("Ingrese el nombre del archivo")
 	_, _ = fmt.Scanf("%s", &fileName)
@@ -19,12 +20,84 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	} else {
-		maskedFirst := body[0] & uint8(maskFirst)
-		maskedLast := body[0] & uint8(maskLast)
-		fmt.Printf("\nint: %08b masked first part: %08b masked last part: %08b", body[0], maskedFirst, maskedLast)
-		xor := body[0] ^ body[1]
-		fmt.Printf("\nbyte 1: %08b byte 2: %08b xor: %08b", body[0], body[1], xor)
+
+		encodedBody = hamming7(body)
+
+		err = saveFile("encoded"+fileName, encodedBody)
+		if err != nil {
+			fmt.Println(err)
+		}
+
 	}
+}
+
+// Receives a byte slice, returns it encoded
+func hamming7(file []byte) []byte {
+	//Mask that shows first bits
+	maskFirst := 240
+	//Mask that shows last bits
+	maskLast := 15
+	//Encoded byte slice
+	var ret []byte
+	for i := 0; i < len(file); i++ {
+		//Add mask
+		maskedFirst := file[i] & uint8(maskFirst)
+		//Move to last positions
+		maskedFirst /= 16
+		//Add mask
+		maskedLast := file[i] & uint8(maskLast)
+
+		//Convert int to byte slices
+		slicedFirst := parceByte(int8(maskedFirst))
+		slicedLast := parceByte(int8(maskedLast))
+
+		//Encode with hamming 7 both parts
+		slicedFirst, slicedLast = encode(slicedFirst, slicedLast)
+
+		ret = append(ret, byte(deParceByte(slicedFirst)))
+		ret = append(ret, byte(deParceByte(slicedLast)))
+
+	}
+	return ret
+}
+
+func parceByte(maskedByte int8) [7]int {
+	//Convert maskedByte to a string with its binary representation
+	stringByte := strconv.FormatInt(int64(maskedByte), 2)
+	//Convert stringByte to a slice
+	sliceSB := []byte(stringByte)
+	var ret [7]int
+	sliceLen := len(sliceSB)
+	for i := sliceLen - 1; i >= 0; i-- {
+		//Convert strings to int in all positions
+		ret[7-sliceLen+i], _ = strconv.Atoi(string(sliceSB[i]))
+	}
+	return ret
+}
+
+func deParceByte(encoded [7]int) int64 {
+	sliceLen := len(encoded)
+	var encodedStringSlice []string
+	for i := 0; i < sliceLen; i++ {
+		encodedStringSlice = append(encodedStringSlice, strconv.Itoa(encoded[i]))
+	}
+	encodedString := strings.Join([]string(encodedStringSlice), "")
+	ret, _ := strconv.ParseInt(encodedString, 2, 64)
+	return ret
+}
+
+func encode(target1 [7]int, target2 [7]int) ([7]int, [7]int) {
+	target1[2] = target1[3]
+	target1[0] = target1[2] ^ target1[4] ^ target1[6]
+	target1[1] = target1[2] ^ target1[5] ^ target1[6]
+	target1[3] = target1[4] ^ target1[5] ^ target1[6]
+
+	target2[2] = target2[3]
+	target2[0] = target2[2] ^ target2[4] ^ target2[6]
+	target2[1] = target2[2] ^ target2[5] ^ target2[6]
+	target2[3] = target2[4] ^ target2[5] ^ target2[6]
+
+	return target1, target2
 }
 
 func loadFile(fileName string) ([]byte, error) {
@@ -37,8 +110,8 @@ func loadFile(fileName string) ([]byte, error) {
 	return body, nil
 }
 
-/*func saveFile(fileName string, body []byte) error{
+func saveFile(fileName string, body []byte) error {
 
 	return ioutil.WriteFile(fileName, body, 0600)
 
-}*/
+}
