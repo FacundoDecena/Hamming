@@ -4,18 +4,17 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"strconv"
 	"time"
-	//"www.github.com/willf/bitset.git"
 )
 
 func main() {
-	start := time.Now()
 	var fileName string
 	var encodedBody []byte
 
 	fmt.Println("Ingrese el nombre del archivo")
 	_, _ = fmt.Scanf("%s", &fileName)
+
+	start := time.Now()
 
 	body, err := loadFile(fileName)
 
@@ -32,7 +31,8 @@ func main() {
 
 	}
 	elapsed := time.Since(start)
-	log.Printf("Hamming7 took %s", elapsed)
+	log.Printf("\nHamming7 took %s", elapsed)
+
 }
 
 // Receives a byte slice, returns it encoded
@@ -50,56 +50,48 @@ func hamming7(file []byte) []byte {
 		maskedFirst /= 16
 		//Add mask
 		maskedLast := file[i] & uint8(maskLast)
+		//Put extra bit on the right
+		maskedFirst = encode(maskedFirst) << 1
+		//Put extra bit on the right
+		maskedLast = encode(maskedLast) << 1
 
-		//Convert int to byte slices
-		slicedFirst := parceByte(int8(maskedFirst))
-		slicedLast := parceByte(int8(maskedLast))
+		maskedFirst, maskedLast = compress(maskedFirst, maskedLast, i)
 
-		//Encode with hamming 7 both parts
-		slicedFirst, slicedLast = encode(slicedFirst, slicedLast)
-
-		ret = append(ret, byte(deParceByte(slicedFirst)))
-		ret = append(ret, byte(deParceByte(slicedLast)))
-
+		ret = append(ret, maskedFirst, maskedLast)
 	}
 	return ret
 }
 
-func parceByte(maskedByte int8) [7]int {
-	//Convert maskedByte to a string with its binary representation
-	stringByte := FormatInt(maskedByte, 2)
-	//Convert stringByte to a slice
-	sliceSB := []byte(stringByte)
-	var ret [7]int
-	sliceLen := len(sliceSB)
-	for i := sliceLen - 1; i >= 0; i-- {
-		//Convert strings to int in all positions
-		ret[7-sliceLen+i], _ = strconv.Atoi(string(sliceSB[i]))
-	}
-	return ret
+func encode(bait byte) byte {
+	d4 := (bait & uint8(1)) >> 0
+	d3 := (bait & uint8(2)) >> 1
+	d2 := (bait & uint8(4)) >> 2
+	d1 := (bait & uint8(8)) >> 3
+
+	c1 := d1 ^ d2 ^ d4
+	c2 := d1 ^ d3 ^ d4
+	c3 := d2 ^ d3 ^ d4
+	c2 = c2 << 1
+	d1 = d1 << 2
+	c3 = c3 << 3
+	d2 = d2 << 4
+	d3 = d3 << 5
+	d4 = d4 << 6
+
+	return d4 | d3 | d2 | c3 | d1 | c2 | c1
 }
 
-func deParceByte(encoded [7]int) int8 {
-	encodedString := ""
-	for i := 0; i < 7; i++ {
-		encodedString = strconv.Itoa(encoded[i])
+func compress(x byte, y byte, index int) (byte, byte) {
+	exp := 1
+	i := uint8(7 - index)
+	for ; i > 0; i-- {
+		exp *= 2
 	}
-	ret, _ := ParseInt(encodedString, 2, 8)
-	return ret
-}
+	y1 := y & uint8(exp) >> uint8(7-index)
+	x = x | y1
+	y = y << uint8(index)
 
-func encode(target1 [7]int, target2 [7]int) ([7]int, [7]int) {
-	target1[2] = target1[3]
-	target1[0] = target1[2] ^ target1[4] ^ target1[6]
-	target1[1] = target1[2] ^ target1[5] ^ target1[6]
-	target1[3] = target1[4] ^ target1[5] ^ target1[6]
-
-	target2[2] = target2[3]
-	target2[0] = target2[2] ^ target2[4] ^ target2[6]
-	target2[1] = target2[2] ^ target2[5] ^ target2[6]
-	target2[3] = target2[4] ^ target2[5] ^ target2[6]
-
-	return target1, target2
+	return x, y
 }
 
 func loadFile(fileName string) ([]byte, error) {
