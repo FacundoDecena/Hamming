@@ -43,6 +43,11 @@ func hamming7(file []byte) []byte {
 	maskLast := 15
 	//Encoded byte slice
 	var ret []byte
+	//Var j indicates the index of block attached
+	j := 0
+	//x is a complete byte, y is an incomplete byte
+	var x, y byte
+
 	for i := 0; i < len(file); i++ {
 		//Add mask
 		maskedFirst := file[i] & uint8(maskFirst)
@@ -54,10 +59,21 @@ func hamming7(file []byte) []byte {
 		maskedFirst = encode(maskedFirst) << 1
 		//Put extra bit on the right
 		maskedLast = encode(maskedLast) << 1
-
-		maskedFirst, maskedLast = compress(maskedFirst, maskedLast, i)
-
-		ret = append(ret, maskedFirst, maskedLast)
+		//If j==0 maskedFirst can go directly to ret, otherwise has to wait next byte to complete
+		if j == 0 {
+			maskedFirst, maskedLast = compress(maskedFirst, maskedLast, j)
+			ret = append(ret, maskedFirst)
+			y = maskedLast
+		} else if j < 8 {
+			x, y = compress(y, maskedFirst, j)
+			ret = append(ret, x)
+			x = y
+			x, y = compress(y, maskedLast, j)
+			ret = append(ret, x)
+		} else {
+			j = 0
+		}
+		j++
 	}
 	return ret
 }
@@ -89,7 +105,7 @@ func compress(x byte, y byte, index int) (byte, byte) {
 	}
 	y1 := y & uint8(exp) >> uint8(7-index)
 	x = x | y1
-	y = y << uint8(index)
+	y = y << uint8(index+1)
 
 	return x, y
 }
