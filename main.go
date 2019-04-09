@@ -34,6 +34,8 @@ func main() {
 	elapsed := time.Since(start)
 	log.Printf("\nHamming7 took %s", elapsed)
 
+	_, _ = fmt.Scanf("%s")
+	_, _ = fmt.Scanf("%s")
 }
 
 // Receives a byte slice, returns it encoded
