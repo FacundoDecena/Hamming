@@ -88,9 +88,9 @@ func hamming7(file []byte) []byte {
 		//Add mask
 		maskedLast := file[i] & uint8(maskLast)
 		//Put extra bit on the right
-		maskedFirst = encode7(maskedFirst) << 1
+		maskedFirst = encode7(maskedFirst)
 		//Put extra bit on the right
-		maskedLast = encode7(maskedLast) << 1
+		maskedLast = encode7(maskedLast)
 		//If j==0 maskedFirst can go directly to ret, otherwise has to wait next byte to complete
 		if j == 0 {
 			maskedFirst, maskedLast = compress7(maskedFirst, maskedLast, j)
@@ -114,21 +114,22 @@ func hamming7(file []byte) []byte {
 
 func encode7(bait byte) byte {
 	//Get bits from position in brackets and send it to the left
-	d4 := (bait & uint8(1)) >> 0
-	d3 := (bait & uint8(2)) >> 1
-	d2 := (bait & uint8(4)) >> 2
-	d1 := (bait & uint8(8)) >> 3
+	d1 := (bait & uint8(1)) >> 0
+	d2 := (bait & uint8(2)) >> 1
+	d3 := (bait & uint8(4)) >> 2
+	d4 := (bait & uint8(8)) >> 3
 	//Calculate controls using xor
 	c1 := d1 ^ d2 ^ d4
 	c2 := d1 ^ d3 ^ d4
 	c3 := d2 ^ d3 ^ d4
 	//set variables in their position
-	c2 = c2 << 1
-	d1 = d1 << 2
-	c3 = c3 << 3
-	d2 = d2 << 4
-	d3 = d3 << 5
-	d4 = d4 << 6
+	c1 = c1 << 1
+	c2 = c2 << 2
+	d1 = d1 << 3
+	c3 = c3 << 4
+	d2 = d2 << 5
+	d3 = d3 << 6
+	d4 = d4 << 7
 
 	return d4 | d3 | d2 | c3 | d1 | c2 | c1
 }
