@@ -10,14 +10,37 @@ import (
 )
 
 func Hamming() {
+	var dhOp int
+	r := bufio.NewReader(os.Stdin)
+	dhContinue_ := true
+	for dhContinue_ {
+		clearScreen()
+		fmt.Println("¿Que tipo de hamming quiere aplicar?")
+		fmt.Println("1 - Hamming 7")
+		fmt.Println("2 - Hamming 32")
+		fmt.Println("3 - Hamming 1024")
+		fmt.Println("4 - Hamming 32768")
+		fmt.Println("5 - Volver")
+		fmt.Printf("Su opcion: ")
+		dhOp = 0
+		_, _ = fmt.Fscanf(r, "%d", &dhOp)
+		switch dhOp {
+		case 1:
+			preHamming7()
+		case 5:
+			dhContinue_ = false
+		}
+		_, _ = fmt.Fscanf(r, "%d")
+	}
+
+}
+
+func preHamming7() {
 	var fileName string
 	var encodedBody []byte
 	r := bufio.NewReader(os.Stdin)
-	//Fixes bug
-	//_, _ = fmt.Scanf("%s", &fileName)
 
 	clearScreen()
-
 	fmt.Println("Ingrese el nombre del archivo")
 	_, _ = fmt.Fscanf(r, "%s", &fileName)
 	//Since golang does not show the time a program runs...
@@ -65,20 +88,20 @@ func hamming7(file []byte) []byte {
 		//Add mask
 		maskedLast := file[i] & uint8(maskLast)
 		//Put extra bit on the right
-		maskedFirst = encode(maskedFirst) << 1
+		maskedFirst = encode7(maskedFirst) << 1
 		//Put extra bit on the right
-		maskedLast = encode(maskedLast) << 1
+		maskedLast = encode7(maskedLast) << 1
 		//If j==0 maskedFirst can go directly to ret, otherwise has to wait next byte to complete
 		if j == 0 {
-			maskedFirst, maskedLast = compress(maskedFirst, maskedLast, j)
+			maskedFirst, maskedLast = compress7(maskedFirst, maskedLast, j)
 			ret = append(ret, maskedFirst)
 			y = maskedLast
 		} else if j < 8 {
 			//now y is complete, then is saved in x and can be append to ret
-			x, y = compress(y, maskedFirst, j)
+			x, y = compress7(y, maskedFirst, j)
 			ret = append(ret, x)
 			//we can complete y with maskedLast first j bits, after that y meets the conditions to be x
-			x, y = compress(y, maskedLast, j)
+			x, y = compress7(y, maskedLast, j)
 			ret = append(ret, x)
 		} else {
 			//Restart the process
@@ -89,7 +112,7 @@ func hamming7(file []byte) []byte {
 	return ret
 }
 
-func encode(bait byte) byte {
+func encode7(bait byte) byte {
 	//Get bits from position in brackets and send it to the left
 	d4 := (bait & uint8(1)) >> 0
 	d3 := (bait & uint8(2)) >> 1
@@ -111,7 +134,7 @@ func encode(bait byte) byte {
 }
 
 //Joins x and y, returns y moved to the left
-func compress(x byte, y byte, index int) (byte, byte) {
+func compress7(x byte, y byte, index int) (byte, byte) {
 	//My implementation for **
 	exp := 1
 	i := uint8(7 - index)
@@ -126,42 +149,4 @@ func compress(x byte, y byte, index int) (byte, byte) {
 	y = y << uint8(index+1)
 
 	return x, y
-}
-
-func deHamming() {
-	var dhOp int
-	r := bufio.NewReader(os.Stdin)
-	dhContinue_ := true
-	for dhContinue_ {
-		clearScreen()
-		fmt.Println("¿Que tipo de hamming ha sido aplicado?")
-		fmt.Println("1 - Hamming 7")
-		fmt.Println("2 - Hamming 32")
-		fmt.Println("3 - Hamming 1024")
-		fmt.Println("4 - Hamming 32768")
-		fmt.Println("5 - Volver")
-		fmt.Printf("Su opcion: ")
-		dhOp = 0
-		_, _ = fmt.Fscanf(r, "%d", &dhOp)
-		switch dhOp {
-		case 1:
-			deHamming7()
-		case 5:
-			dhContinue_ = false
-		}
-		_, _ = fmt.Fscanf(r, "%d")
-	}
-
-}
-
-func deHamming7() {
-	var fileName string
-	r := bufio.NewReader(os.Stdin)
-
-	clearScreen()
-	fmt.Println("Ingrese el nombre del archivo .ha1")
-	_, _ = fmt.Fscanf(r, "%s", &fileName)
-	fmt.Println(fileName)
-	_, _ = fmt.Fscanf(r, "%d")
-	_, _ = fmt.Fscanf(r, "%d")
 }

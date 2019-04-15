@@ -25,7 +25,7 @@ func main() {
 		case 1:
 			Hamming()
 		case 2:
-			deHamming()
+			DeHamming()
 		case 6:
 			continue_ = false
 		}
