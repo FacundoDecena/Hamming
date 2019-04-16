@@ -43,6 +43,7 @@ func preHamming7() {
 	clearScreen()
 	fmt.Println("Ingrese el nombre del archivo")
 	_, _ = fmt.Fscanf(r, "%s", &fileName)
+
 	//Since golang does not show the time a program runs...
 	start := time.Now()
 
