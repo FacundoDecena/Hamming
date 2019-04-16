@@ -154,7 +154,7 @@ func compress7(x byte, y byte, index int) (byte, byte) {
 
 func exp(exponent int) int {
 	//My implementation for **
-	result = 1
+	var result = 1
 	for i := 0; i < exponent; i++ {
 		result *= result
 	}
