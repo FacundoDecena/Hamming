@@ -64,7 +64,7 @@ func preDeHamming7() {
 
 func deHamming7(file []byte) (ret []byte) {
 	var encoded1stByte, encoded2ndByte, bitsToSpare byte
-	two55 := potencia(8) - 1 // 255
+	two55 := exp(8) - 1 // 255
 	var j byte
 	j = 0
 	for i := 0; i < len(file); i++ {
@@ -72,7 +72,7 @@ func deHamming7(file []byte) (ret []byte) {
 			//Select the first 7-j bits
 			encoded1stByte = file[i] & (two55 << (j + 1))
 			//Save bits that does not belong to the hamming block
-			bitsToSpare = file[i] & (potencia(j+1) - 1)
+			bitsToSpare = file[i] & (exp(j+1) - 1)
 			//Append decoded half to ret
 			ret = append(ret, decode7(encoded1stByte))
 			j++
@@ -85,7 +85,7 @@ func deHamming7(file []byte) (ret []byte) {
 			//Append bits to spare and the bits that belongs to the second hamming block
 			encoded2ndByte = bitsToSpare & encoded2ndByte
 			//Save bits that does not belong to the hamming block for the next iteration
-			bitsToSpare = file[i+1] & (potencia(j+1) - 1)
+			bitsToSpare = file[i+1] & (exp(j+1) - 1)
 			//Append decoded half to ret
 			ret = append(ret, decode7(encoded2ndByte))
 			bitsToSpare = file[i] & (j + 1)
@@ -132,10 +132,10 @@ func correct(wrong byte) (corrected byte) {
 	return wrong
 }
 
-func potencia(exp byte) (ret byte) {
+func exp(exponent byte) (ret byte) {
 	ret = 1
 	var i byte
-	for i = 0; i < exp; i++ {
+	for i = 0; i < exponent; i++ {
 		ret *= 2
 	}
 	return ret
