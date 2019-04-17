@@ -153,6 +153,7 @@ func compress7(x byte, y byte, index int) (byte, byte) {
 	return x, y
 }
 
+/*
 func exp(exponent int) int {
 	//My implementation for **
 	var result = 1
@@ -161,3 +162,4 @@ func exp(exponent int) int {
 	}
 	return result
 }
+*/
