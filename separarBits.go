@@ -14,18 +14,13 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	} else {
-		// var isEmpty bool
-		fmt.Println("cuerpo original: ", body)
-		fmt.Printf("cuerpo original: %08b\n", body)
 
 		for body != nil {
 			bytes, body = takeBits(26, body)
 
 			/* haming algoritm */
+			fmt.Printf("%08b", bytes)
 
-			fmt.Printf("\nsaco los siguientes bits:\n bytes necesarios: %08b\n", bytes)
-			fmt.Printf("cuerpo modificado %08b\n ", body)
-			fmt.Println("cuerpo modificado: ", body)
 		}
 
 	}
@@ -46,11 +41,6 @@ func takeBits(bits int, body []byte) ([]byte, []byte) {
 			finish = true
 			body = append(body, uint8(0))
 
-			// for i := len(body); i <= cantByte; i++ {
-			// 	body = append(body, uint8(0))
-			// 	finish = true
-			// }
-
 		}
 		arr_bit = append(arr_bit, body[index])
 	}
@@ -69,16 +59,15 @@ func takeBits(bits int, body []byte) ([]byte, []byte) {
 
 		for index := 0; index < len(body)-1; index++ {
 
-			bait_aux := body[index]
-			fmt.Printf("bait_aux: %08b    ", bait_aux)
-			nextBait := body[index+1]
-			fmt.Printf("nextByte: %08b\n", nextBait)
+			bait_aux := body[index] // take the byte
 
-			nextBait = nextBait >> 6
-			fmt.Printf("nextByte: %08b\n", nextBait)
+			nextBait := body[index+1] // take the next byte
 
-			body[index] = bait_aux | nextBait
-			body[index+1] = body[index+1] << 2
+			nextBait = nextBait >> 6 // move the bits i want to the right
+
+			body[index] = bait_aux | nextBait // merge the bits of both bytes
+
+			body[index+1] = body[index+1] << 2 // adjust the nextByte.
 
 		}
 
