@@ -159,8 +159,8 @@ func encode32(input [4]byte) [4]byte {
 	var numberOfByte = 3
 	//Data bits accommodate process
 	for i := 0; i < 5; i++ {
-		il := exp(i) - 1
-		sl := exp(i+1) - 1
+		il := expInt(i) - 1
+		sl := expInt(i+1) - 1
 		for j := il + 1; j < sl; j++ {
 			var dataBit = takeBit(input[numberOfByte], position, int(j%8))
 			var x = byteNumber(int(j), 4)
@@ -175,14 +175,14 @@ func encode32(input [4]byte) [4]byte {
 	//Control bits calculus process
 	for i := 0; i < 5; i++ {
 		var parity = byte(0)
-		for j := exp(i) - 1; j < 32; j += exp(i + 1) {
-			for k := 0; k < exp(i); k++ {
+		for j := expInt(i) - 1; j < 32; j += expInt(i + 1) {
+			for k := 0; k < expInt(i); k++ {
 				parity = parity ^ takeBit(encoded[byteNumber(j+int(k), 4)], int((j+k)%8), 0)
 			}
 		}
 		if takeBit(parity, 0, 0) != 0 {
-			x := byteNumber(int(exp(i)-1), 4)
-			encoded[x] = encoded[x] | takeBit(1, 0, int(exp(i)-1)%8)
+			x := byteNumber(int(expInt(i)-1), 4)
+			encoded[x] = encoded[x] | takeBit(1, 0, int(expInt(i)-1)%8)
 		}
 	}
 	return encoded
@@ -190,7 +190,7 @@ func encode32(input [4]byte) [4]byte {
 
 //Apply a mask to a source byte to get the bit in the initial position and shifter it to the final position.
 func takeBit(source byte, initialPosition int, finalPosition int) byte {
-	var result = source & byte(exp(initialPosition))
+	var result = source & byte(expInt(initialPosition))
 	var shift = finalPosition - initialPosition
 	if shift == 0 {
 		return result
@@ -217,7 +217,7 @@ func byteNumber(bitPosition int, bytesQuantity int) int {
 	return 0
 }
 
-func exp(exponent int) int {
+func expInt(exponent int) int {
 	//My implementation for **
 	var result = 1
 	for i := 0; i < exponent; i++ {
