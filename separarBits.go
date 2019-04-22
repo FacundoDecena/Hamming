@@ -5,6 +5,8 @@ import (
 	"math"
 )
 
+/*
+
 func main() {
 	fileName := "prueba.txt"
 	var body []byte
@@ -18,13 +20,13 @@ func main() {
 		for body != nil {
 			bytes, body = takeBits(26, body)
 
-			/* haming algoritm */
+			/* haming algoritm
 			fmt.Printf("%08b", bytes)
 
 		}
 
 	}
-}
+}*/
 
 func takeBits(bits int, body []byte) ([]byte, []byte) {
 	var cantByte int
