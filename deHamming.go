@@ -63,51 +63,77 @@ func preDeHamming7() {
 }
 
 func deHamming7(file []byte) (ret []byte) {
-	var encoded1stByte, encoded2ndByte, bitsToSpare byte
-	two55 := exp(8) - 1 // 255
+	var encoded1stByte, encoded2ndByte, bitsToSpare, decoded1stByte, decoded2ndByte byte
+	two55 := byte(exp(8)) - 1 // 255
 	var j byte
 	j = 0
-	for i := 0; i < len(file); i++ {
+	for i := 0; i < len(file)-1; i += 2 {
 		if j == 0 {
 			//Select the first 7-j bits
 			encoded1stByte = file[i] & (two55 << (j + 1))
 			//Save bits that does not belong to the hamming block
-			bitsToSpare = file[i] & (exp(j+1) - 1)
-			//Append decoded half to ret
-			ret = append(ret, decode7(encoded1stByte))
+			bitsToSpare = file[i] & (byte(exp(j+1)) - 1)
+			//Append decoded half to decodedByte
+			decoded1stByte = decode7(encoded1stByte) << 4
 			j++
 			//Move bits to their place
-			bitsToSpare = bitsToSpare<<8 - j
+			bitsToSpare = bitsToSpare << (7 - j)
 			//Select second hamming block
 			encoded2ndByte = file[i+1] & (two55 << (j + 1))
 			//Move the slice of block to its position
-			encoded2ndByte = encoded2ndByte >> (j + 1)
+			encoded2ndByte = encoded2ndByte >> (j)
 			//Append bits to spare and the bits that belongs to the second hamming block
-			encoded2ndByte = bitsToSpare & encoded2ndByte
+			encoded2ndByte = bitsToSpare | encoded2ndByte
 			//Save bits that does not belong to the hamming block for the next iteration
-			bitsToSpare = file[i+1] & (exp(j+1) - 1)
-			//Append decoded half to ret
-			ret = append(ret, decode7(encoded2ndByte))
-			bitsToSpare = file[i] & (j + 1)
+			bitsToSpare = file[i+1] & (byte(exp(j+1)) - 1)
+			//Append 2nd decoded half to decodedByte
+			decoded2ndByte = decode7(encoded2ndByte)
+			decodedByte := decoded1stByte | decoded2ndByte
+			//Append decodedByte to ret
+			ret = append(ret, decodedByte)
 			j++
 		} else {
-			panic("Not implemented yet")
+			//Select the first 7-j bits
+			encoded1stByte = file[i] & (two55 << (j + 1))
+			encoded1stByte = encoded1stByte >> (j / 2)
+			//Save bits that does not belong to the hamming block
+			bitsToSpare = file[i] & (byte(exp(j+1)) - 1)
+			//Append decoded half to decodedByte
+			decoded1stByte = decode7(encoded1stByte) << 4
+			j++
+			//Move bits to their place
+			bitsToSpare = bitsToSpare << (7 - j)
+			//Select second hamming block
+			encoded2ndByte = file[i+1] & (two55 << (j + 1))
+			//Move the slice of block to its position
+			encoded2ndByte = encoded2ndByte >> (j)
+			//Append bits to spare and the bits that belongs to the second hamming block
+			encoded2ndByte = bitsToSpare | encoded2ndByte
+			//Save bits that does not belong to the hamming block for the next iteration
+			bitsToSpare = file[i+1] & (byte(exp(j+1)) - 1)
+			//Append 2nd decoded half to decodedByte
+			decoded2ndByte = decode7(encoded2ndByte)
+			decodedByte := decoded1stByte | decoded2ndByte
+			//Append decodedByte to ret
+			ret = append(ret, decodedByte)
+			j++
 		}
 		if j == 8 {
 			j = 0
 		}
 	}
+	ret = append(ret, file[len(file)-1])
 	return ret
 }
 
 func decode7(bait byte) (s byte) {
-	c1 := (bait & uint8(1)) >> 7
-	c2 := (bait & uint8(2)) >> 6
-	d1 := (bait & uint8(4)) >> 5
-	c3 := (bait & uint8(8)) >> 4
-	d2 := (bait & uint8(16)) >> 3
-	d3 := (bait & uint8(32)) >> 2
-	d4 := (bait & uint8(64)) >> 1
+	c1 := (bait & uint8(64)) >> 6
+	c2 := (bait & uint8(32)) >> 5
+	d1 := (bait & uint8(16)) >> 4
+	c3 := (bait & uint8(8)) >> 3
+	d2 := (bait & uint8(4)) >> 2
+	d3 := (bait & uint8(2)) >> 1
+	d4 := (bait & uint8(1)) >> 0
 	//Calculate sindrome using xor
 	s1 := c1 ^ d1 ^ d2 ^ d4<<0
 	s2 := c2 ^ d1 ^ d3 ^ d4<<1
@@ -119,20 +145,20 @@ func decode7(bait byte) (s byte) {
 		correct(bait)
 	}
 
-	d1 = d1 >> 4
-	d2 = d2 >> 2
-	d3 = d3 >> 1
-	d4 = d4 >> 0
+	d1 = d1 << 4
+	d2 = d2 << 2
+	d3 = d3 << 1
+	d4 = d4 << 0
 
-	return d1 | d2 | d3 | d4
-
+	s = d1 | d2 | d3 | d4
+	return s
 }
 
 func correct(wrong byte) (corrected byte) {
 	return wrong
 }
 
-func exp(exponent byte) (ret byte) {
+func exp(exponent byte) (ret int) {
 	ret = 1
 	var i byte
 	for i = 0; i < exponent; i++ {
