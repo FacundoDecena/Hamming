@@ -152,11 +152,67 @@ func compress7(x byte, y byte, index int) (byte, byte) {
 	return x, y
 }
 
-func exp(exponent int) int {
-	//My implementation for **
-	var result = 1
-	for i := 0; i < exponent; i++ {
-		result *= result
+func encode32(input [4]byte)[4] byte{
+	var encoded [4]byte
+	//The 6th bit of input[3] is the less significant bit where i begin to accommodate the bits in encoded
+	var position = 6
+	var numberOfByte = 3
+	//Data bits accommodate process
+	for i:=0; i<5; i++ {
+		il := exp(i) - 1
+		sl := exp(i + 1)  - 1
+		for j := il + 1; j < sl; j++ {
+			var dataBit = takeBit(input[numberOfByte], position, int(j%8))
+			var x = byteNumber(int(j),4)
+			encoded[x] = encoded[x] | dataBit
+			position++
+			if position > 7 {
+				numberOfByte--
+				position = 0
+			}
+		}
 	}
-	return result
+	//Control bits calculus process
+	for i:=0;i<5;i++{
+		var parity = byte(0)
+		for j := exp(i)-1; j<32; j+= exp(i+1){
+			for k := 0; k < exp(i); k++{
+				parity = parity ^ takeBit(encoded[byteNumber(j+int(k), 4)], int((j+k)%8), 0)
+			}
+		}
+		if takeBit(parity,0,0) != 0{
+			x := byteNumber(int(exp(i)-1),4)
+			encoded[x] = encoded[x] | takeBit(1,0,int(exp(i)-1)%8)
+		}
+	}
+	return encoded
+}
+
+//Apply a mask to a source byte to get the bit in the initial position and shifter it to the final position.
+func takeBit(source byte,initialPosition int,finalPosition int) byte{
+	var result = source & byte(exp(initialPosition))
+	var shift = finalPosition - initialPosition
+	if shift == 0{
+		return result
+	}else if shift > 0{
+		return result << uint(shift)
+	}else{
+		shift*=-1
+		return result >> uint(shift)
+	}
+}
+``
+//From a bit position in a block of bytes of size bytesQuantity, returns the number of the byte which the bit belongs
+func byteNumber(bitPosition int,bytesQuantity int) int{
+	il := 0
+	sl := 7
+	for i:= bytesQuantity-1;i>0;i--{
+		if bitPosition>=il && bitPosition <=sl{
+			return i
+		}else{
+			il +=8
+			sl +=8
+		}
+	}
+	return 0
 }
