@@ -152,18 +152,39 @@ func compress7(x byte, y byte, index int) (byte, byte) {
 	return x, y
 }
 
-func encode32(input [4]byte) [4]byte {
-	var encoded [4]byte
-	//The 6th bit of input[3] is the less significant bit where i begin to accommodate the bits in encoded
-	var position = 6
-	var numberOfByte = 3
+func encode(size int, input []byte) []byte {
+	encoded := make([]byte, int(size/8))
+	var position int
+	var numberOfByte int
+	var controlBitsQuantity int
+	//Set the initial position where is the first information bit in the array passed by parameter depending of what hamming will be apply
+	switch size {
+	case 8:
+		position = 0
+		numberOfByte = 0
+		controlBitsQuantity = 2
+	case 32:
+		position = 6
+		numberOfByte = 3
+		controlBitsQuantity = 4
+	case 1024:
+		position = 3
+		numberOfByte = 126
+		controlBitsQuantity = 9
+	case 32768:
+		position = 0
+		numberOfByte = 4095
+		controlBitsQuantity = 14
+	default:
+		return nil
+	}
 	//Data bits accommodate process
-	for i := 0; i < 5; i++ {
+	for i := 0; i < controlBitsQuantity+1; i++ {
 		il := expInt(i) - 1
 		sl := expInt(i+1) - 1
 		for j := il + 1; j < sl; j++ {
-			var dataBit = takeBit(input[numberOfByte], position, int(j%8))
-			var x = byteNumber(int(j), 4)
+			dataBit := takeBit(input[numberOfByte], position, int(j%8))
+			x := byteNumber(int(j), size/8)
 			encoded[x] = encoded[x] | dataBit
 			position++
 			if position > 7 {
@@ -173,15 +194,15 @@ func encode32(input [4]byte) [4]byte {
 		}
 	}
 	//Control bits calculus process
-	for i := 0; i < 5; i++ {
-		var parity = byte(0)
-		for j := expInt(i) - 1; j < 32; j += expInt(i + 1) {
+	for i := 0; i < controlBitsQuantity+1; i++ {
+		parity := byte(0)
+		for j := expInt(i) - 1; j < size; j += expInt(i + 1) {
 			for k := 0; k < expInt(i); k++ {
-				parity = parity ^ takeBit(encoded[byteNumber(j+int(k), 4)], int((j+k)%8), 0)
+				parity = parity ^ takeBit(encoded[byteNumber(j+int(k), size/8)], int((j+k)%8), 0)
 			}
 		}
 		if takeBit(parity, 0, 0) != 0 {
-			x := byteNumber(int(expInt(i)-1), 4)
+			x := byteNumber(int(expInt(i)-1), size/8)
 			encoded[x] = encoded[x] | takeBit(1, 0, int(expInt(i)-1)%8)
 		}
 	}
