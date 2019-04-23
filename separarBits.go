@@ -31,7 +31,6 @@ func main() {
 }
 
 func takeBits(bits int, body []byte, NumberOfTrashBits int) ([]byte, []byte, int) {
-
 	var cantByte int
 	var cantBit int
 	var arr_bit []byte
@@ -39,35 +38,52 @@ func takeBits(bits int, body []byte, NumberOfTrashBits int) ([]byte, []byte, int
 	var bait byte
 	var finish bool
 
-	cantByte = bits / 8             // amount bytes i need
+	cantByte = bits / 8 // amount bytes i need
+
 	cantBit = bits - (cantByte * 8) // amount bits i need for the incomplete byte.
 
-	for index := 0; index < cantByte; index++ {
-		if len(body) <= cantByte {
-			finish = true // i need to fill with zeros to complete the missing bytes.
-			body = append(body, uint8(0))
+	if cantByte == 0 {
+		finish = true
+
+	} else {
+		for index := 0; index < cantByte; index++ {
+			if len(body) <= cantByte {
+				finish = true
+				body = append(body, uint8(0))
+			}
+			bitsToMove := 8 - NumberOfTrashBits // how many bits i need to shift.
+
+			bait_aux := body[index]
+			bait_aux = bait_aux << uint(NumberOfTrashBits) // shift to left how many bits i need to remove
+			nextBait := body[index+1]
+			nextBait = nextBait >> uint(bitsToMove)
+			fmt.Printf("bait_aux : %08b  nextbait : %08b \n", bait_aux, nextBait)
+			body[index] = bait_aux | nextBait // merge the bytes to pass the bits from the next byte to thisone.
+
+			arr_bit = append(arr_bit, body[index])
+
 		}
-		bitsToMove := 8 - NumberOfTrashBits // how many bits i need to shift.
-
-		bait_aux := body[index]
-		bait_aux = bait_aux << uint(NumberOfTrashBits) // shift to left how many bits i need to remove
-		nextBait := body[index+1]
-		nextBait = nextBait >> uint(bitsToMove) // move all the bits i need from the next byte to the bottom.
-		body[index] = bait_aux | nextBait       // merge the bytes to pass the bits from the next byte to this one.
-
-		arr_bit = append(arr_bit, body[index])
-
 	}
 	if finish == true {
-		arr_bit = append(arr_bit, body[cantByte])
+		bait = body[cantByte] << uint(NumberOfTrashBits) // adjust the byte
+		mask = doMask(cantBit)                           // make the mask by how many bits i need
+		bait = bait & mask                               // make the byte
+		fmt.Printf("voy a insertar %08b  mascara %08b\n", bait, mask)
+		arr_bit = append(arr_bit, bait)
+		body = nil
 		body = nil
 	} else {
 		bait = body[cantByte] << uint(NumberOfTrashBits) // adjust the byte
 		mask = doMask(cantBit)                           // make the mask by how many bits i need
 		bait = bait & mask                               // make the byte
-		arr_bit = append(arr_bit, bait)                  // put the byte on the array.
-		NumberOfTrashBits += cantBit                     // add the bits i need, because i doesn't adjust the original array and i want to shift the bits i need and the bits i want to eliminate.
-		body = body[cantByte:]                           // adjust the array
+		fmt.Printf("voy a insertar %08b  mascara %08b\n", bait, mask)
+		arr_bit = append(arr_bit, bait) // put the byte on the array.
+		NumberOfTrashBits += cantBit
+		body = body[cantByte:] // adjust the array
+
+		// fmt.Printf("\nsaco los siguientes bits:\nbytes necesarios: %08b\n\n\n", arr_bit)
+		// fmt.Printf("cuerpo %08b\n", body)
+		fmt.Printf("numberoftrashbits: %d \n\n ", NumberOfTrashBits)
 
 	}
 	return arr_bit, body, NumberOfTrashBits
