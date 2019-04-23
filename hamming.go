@@ -82,15 +82,17 @@ func hamming7(file []byte) []byte {
 
 	for i := 0; i < len(file); i++ {
 		//Add mask
-		maskedFirst := file[i] & uint8(maskFirst)
+		hammingMaskedFirst := make([]byte, 1)
+		hammingMaskedFirst[0] = file[i] & uint8(maskFirst)
 		//Move to last positions
-		maskedFirst /= 16
+		hammingMaskedFirst[0] /= 16
 		//Add mask
-		maskedLast := file[i] & uint8(maskLast)
+		hammingMaskedLast := make([]byte, 1)
+		hammingMaskedLast[0] = file[i] & uint8(maskLast)
 		//Put extra bit on the right
-		maskedFirst = encode7(maskedFirst)
+		maskedFirst := encode(8, hammingMaskedFirst)[0]
 		//Put extra bit on the right
-		maskedLast = encode7(maskedLast)
+		maskedLast := encode(8, hammingMaskedLast)[0]
 		//If j==0 maskedFirst can go directly to ret, otherwise has to wait next byte to complete
 		if j == 0 {
 			maskedFirst, maskedLast = compress7(maskedFirst, maskedLast, j)
@@ -110,28 +112,6 @@ func hamming7(file []byte) []byte {
 		j++
 	}
 	return ret
-}
-
-func encode7(bait byte) byte {
-	//Get bits from position in brackets and send it to the left
-	d1 := (bait & uint8(1)) >> 0
-	d2 := (bait & uint8(2)) >> 1
-	d3 := (bait & uint8(4)) >> 2
-	d4 := (bait & uint8(8)) >> 3
-	//Calculate controls using xor
-	c1 := d1 ^ d2 ^ d4
-	c2 := d1 ^ d3 ^ d4
-	c3 := d2 ^ d3 ^ d4
-	//set variables in their position
-	c1 = c1 << 1
-	c2 = c2 << 2
-	d1 = d1 << 3
-	c3 = c3 << 4
-	d2 = d2 << 5
-	d3 = d3 << 6
-	d4 = d4 << 7
-
-	return d4 | d3 | d2 | c3 | d1 | c2 | c1
 }
 
 //Joins x and y, returns y moved to the left
