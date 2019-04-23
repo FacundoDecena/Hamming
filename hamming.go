@@ -152,6 +152,7 @@ func compress7(x byte, y byte, index int) (byte, byte) {
 	return x, y
 }
 
+//Size should be: 8 for hamming7, 32 for hamming 32, 1024 for hamming 1024 and 32768 for hamming 32768
 func encode(size int, input []byte) []byte {
 	encoded := make([]byte, int(size/8))
 	var position int
