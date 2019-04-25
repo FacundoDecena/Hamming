@@ -58,8 +58,8 @@ func preDeHamming7() {
 		fmt.Println(err)
 	}
 
-	_, _ = fmt.Scanf("%s")
-	_, _ = fmt.Scanf("%s")
+	//_, _ = fmt.Scanf("%s")
+	//_, _ = fmt.Scanf("%s")
 }
 
 func deHamming7(file []byte) (ret []byte) {
@@ -77,7 +77,7 @@ func deHamming7(file []byte) (ret []byte) {
 			decoded1stByte = decode7(encoded1stByte) << 4
 			j++
 			//Move bits to their place
-			bitsToSpare = bitsToSpare << (7 - j)
+			bitsToSpare = bitsToSpare << (8 - j)
 			//Select second hamming block
 			encoded2ndByte = file[i+1] & (two55 << (j + 1))
 			//Move the slice of block to its position
@@ -92,17 +92,20 @@ func deHamming7(file []byte) (ret []byte) {
 			//Append decodedByte to ret
 			ret = append(ret, decodedByte)
 			j++
+			bitsToSpare = bitsToSpare << (8 - j)
 		} else {
 			//Select the first 7-j bits
 			encoded1stByte = file[i] & (two55 << (j + 1))
-			encoded1stByte = encoded1stByte >> (j / 2)
-			//Save bits that does not belong to the hamming block
-			bitsToSpare = file[i] & (byte(exp(j+1)) - 1)
+			encoded1stByte >>= j
+
+			encoded1stByte = bitsToSpare | encoded1stByte
 			//Append decoded half to decodedByte
 			decoded1stByte = decode7(encoded1stByte) << 4
+			//Save bits that does not belong to the hamming block
+			bitsToSpare = file[i] & (byte(exp(j+1)) - 1)
 			j++
 			//Move bits to their place
-			bitsToSpare = bitsToSpare << (7 - j)
+			bitsToSpare = bitsToSpare << (8 - j)
 			//Select second hamming block
 			encoded2ndByte = file[i+1] & (two55 << (j + 1))
 			//Move the slice of block to its position
@@ -117,8 +120,9 @@ func deHamming7(file []byte) (ret []byte) {
 			//Append decodedByte to ret
 			ret = append(ret, decodedByte)
 			j++
+			bitsToSpare = bitsToSpare << (8 - j)
 		}
-		if j == 8 {
+		if j > 7 {
 			j = 0
 		}
 	}
