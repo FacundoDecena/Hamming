@@ -5,31 +5,6 @@ import (
 	"math"
 )
 
-func main() {
-	fileName := "prueba.txt"
-	var body []byte
-	var bytes []byte
-	TrashBits := 0
-
-	body, err := loadFile(fileName)
-	if err != nil {
-		fmt.Println(err)
-	} else {
-		// var isEmpty bool
-		fmt.Println("cuerpo original: ", body)
-		fmt.Printf("cuerpo original: %08b\n", body)
-
-		for body != nil {
-			bytes, body, TrashBits = takeBits(26, body, TrashBits)
-
-			/* haming algoritm */
-
-			fmt.Printf("\nsaco los siguientes bits:\nbytes necesarios: %08b\n\n\n ", bytes)
-
-		}
-	}
-}
-
 func takeBits(bits int, body []byte, NumberOfTrashBits int) ([]byte, []byte, int) {
 	var cantByte int
 	var cantBit int
