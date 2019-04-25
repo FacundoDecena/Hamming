@@ -3,8 +3,10 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"strings"
+	"time"
 )
 
 func DeHamming() {
@@ -36,6 +38,7 @@ func preDeHamming7() {
 	var fileName string
 	var body []byte
 	var err error
+	var start time.Time
 	r := bufio.NewReader(os.Stdin)
 
 	clearScreen()
@@ -50,15 +53,16 @@ func preDeHamming7() {
 		fmt.Println(err)
 		return
 	}
-
+	start = time.Now()
 	decodedFile := deHamming7(body)
 	fileName = strings.Replace(fileName, ".ha1", ".deh", -1)
 	err = saveFile(fileName, decodedFile)
 	if err != nil {
 		fmt.Println(err)
 	}
-
-	//_, _ = fmt.Scanf("%s")
+	elapsed := time.Since(start)
+	log.Printf("\nDeHamming7 took %s", elapsed)
+	_, _ = fmt.Scanf("%s")
 	//_, _ = fmt.Scanf("%s")
 }
 
