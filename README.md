@@ -1,6 +1,6 @@
 # Hamming
 ***
-Hamming coder and decoder for 7, 64, 1024 and 32768 bits long
+Hamming coder and decoder for 7, 32, 1024 and 32768 bits long
 
 <ol>
 <li>
