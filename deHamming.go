@@ -58,8 +58,6 @@ func preDeHamming7() {
 		fmt.Println(err)
 	}
 
-	_, _ = fmt.Scanf("%s")
-	_, _ = fmt.Scanf("%s")
 }
 
 func deHamming7(file []byte) (ret []byte) {
@@ -71,6 +69,7 @@ func deHamming7(file []byte) (ret []byte) {
 		if j == 0 {
 			//Select the first 7-j bits
 			encoded1stByte = file[i] & (two55 << (j + 1))
+			//encoded1stByte = encoded1stByte >> 1
 			//Save bits that does not belong to the hamming block
 			bitsToSpare = file[i] & (byte(exp(j+1)) - 1)
 			//Append decoded half to decodedByte
@@ -95,7 +94,9 @@ func deHamming7(file []byte) (ret []byte) {
 		} else {
 			//Select the first 7-j bits
 			encoded1stByte = file[i] & (two55 << (j + 1))
-			encoded1stByte = encoded1stByte >> (j / 2)
+			encoded1stByte = encoded1stByte >> (j/2 + 1)
+			bitsToSpare = bitsToSpare << (8 - j)
+			encoded1stByte = bitsToSpare | encoded1stByte
 			//Save bits that does not belong to the hamming block
 			bitsToSpare = file[i] & (byte(exp(j+1)) - 1)
 			//Append decoded half to decodedByte
@@ -110,7 +111,7 @@ func deHamming7(file []byte) (ret []byte) {
 			//Append bits to spare and the bits that belongs to the second hamming block
 			encoded2ndByte = bitsToSpare | encoded2ndByte
 			//Save bits that does not belong to the hamming block for the next iteration
-			bitsToSpare = file[i+1] & (byte(exp(j+1)) - 1)
+			bitsToSpare = file[i+1] & (byte(exp(j+1)) - 1) << (7 - j)
 			//Append 2nd decoded half to decodedByte
 			decoded2ndByte = decode7(encoded2ndByte)
 			decodedByte := decoded1stByte | decoded2ndByte
@@ -122,6 +123,7 @@ func deHamming7(file []byte) (ret []byte) {
 			j = 0
 		}
 	}
+	// Adds EOF
 	ret = append(ret, file[len(file)-1])
 	return ret
 }
@@ -135,7 +137,7 @@ func decode7(bait byte) (s byte) {
 	d3 := (bait & uint8(2)) >> 1
 	d4 := (bait & uint8(1)) >> 0
 	//Calculate sindrome using xor
-	s1 := c1 ^ d1 ^ d2 ^ d4<<0
+	s1 := c1 ^ d1 ^ d2 ^ d4
 	s2 := c2 ^ d1 ^ d3 ^ d4<<1
 	s3 := c3 ^ d2 ^ d3 ^ d4<<2
 
