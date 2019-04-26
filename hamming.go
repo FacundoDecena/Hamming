@@ -90,9 +90,9 @@ func hamming7(file []byte) []byte {
 		hammingMaskedLast := make([]byte, 1)
 		hammingMaskedLast[0] = file[i] & uint8(maskLast)
 		//Put extra bit on the right
-		maskedFirst := encode(8, hammingMaskedFirst)[0]
+		maskedFirst := encode(8, hammingMaskedFirst)[0] << 1
 		//Put extra bit on the right
-		maskedLast := encode(8, hammingMaskedLast)[0]
+		maskedLast := encode(8, hammingMaskedLast)[0] << 1
 		//If j==0 maskedFirst can go directly to ret, otherwise has to wait next byte to complete
 		if j == 0 {
 			maskedFirst, maskedLast = compress7(maskedFirst, maskedLast, j)
