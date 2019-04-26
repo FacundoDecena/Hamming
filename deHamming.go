@@ -36,11 +36,13 @@ func DeHamming() {
 
 func preDeHamming7() {
 	var fileName string
-	var body []byte
+	var body, testBody []byte
 	var err error
 	var start time.Time
 	r := bufio.NewReader(os.Stdin)
 
+	testBody = append(testBody, 205, 155, 54, 156, 208, 199, 165, 205, 155, 54, 156, 208, 199, 165)
+	saveFile("test.ha1", testBody)
 	clearScreen()
 	fmt.Println("Ingrese el nombre del archivo .ha1")
 	_, _ = fmt.Fscanf(r, "%s", &fileName)
@@ -67,14 +69,15 @@ func preDeHamming7() {
 }
 
 func deHamming7(file []byte) (ret []byte) {
-	var encoded1stByte, encoded2ndByte, bitsToSpare, decoded1stByte, decoded2ndByte byte
+	var encoded1stByte, encoded2ndByte, bitsToSpare, decoded1stByte, decoded2ndByte, decodedByte byte
 	two55 := byte(exp(8)) - 1 // 255
 	var j byte
 	j = 0
-	for i := 0; i < len(file)-1; i += 2 {
+	for i := 0; i < len(file); i += 2 {
 		if j == 0 {
 			//Select the first 7-j bits
 			encoded1stByte = file[i] & (two55 << (j + 1))
+			encoded1stByte >>= 1
 			//Save bits that does not belong to the hamming block
 			bitsToSpare = file[i] & (byte(exp(j+1)) - 1)
 			//Append decoded half to decodedByte
@@ -88,6 +91,7 @@ func deHamming7(file []byte) (ret []byte) {
 			encoded2ndByte = encoded2ndByte >> (j)
 			//Append bits to spare and the bits that belongs to the second hamming block
 			encoded2ndByte = bitsToSpare | encoded2ndByte
+			encoded2ndByte >>= 1
 			//Save bits that does not belong to the hamming block for the next iteration
 			bitsToSpare = file[i+1] & (byte(exp(j+1)) - 1)
 			//Append 2nd decoded half to decodedByte
@@ -103,34 +107,40 @@ func deHamming7(file []byte) (ret []byte) {
 			encoded1stByte >>= j
 
 			encoded1stByte = bitsToSpare | encoded1stByte
+			encoded1stByte >>= 1
 			//Append decoded half to decodedByte
 			decoded1stByte = decode7(encoded1stByte) << 4
 			//Save bits that does not belong to the hamming block
 			bitsToSpare = file[i] & (byte(exp(j+1)) - 1)
 			j++
-			//Move bits to their place
-			bitsToSpare = bitsToSpare << (8 - j)
-			//Select second hamming block
-			encoded2ndByte = file[i+1] & (two55 << (j + 1))
-			//Move the slice of block to its position
-			encoded2ndByte = encoded2ndByte >> (j)
-			//Append bits to spare and the bits that belongs to the second hamming block
-			encoded2ndByte = bitsToSpare | encoded2ndByte
-			//Save bits that does not belong to the hamming block for the next iteration
-			bitsToSpare = file[i+1] & (byte(exp(j+1)) - 1)
-			//Append 2nd decoded half to decodedByte
-			decoded2ndByte = decode7(encoded2ndByte)
-			decodedByte := decoded1stByte | decoded2ndByte
+			if i+1 == len(file) {
+				decodedByte = decoded1stByte | bitsToSpare
+			} else {
+				//Move bits to their place
+				bitsToSpare = bitsToSpare << (8 - j)
+				//Select second hamming block
+				encoded2ndByte = file[i+1] & (two55 << (j + 1))
+				//Move the slice of block to its position
+				encoded2ndByte = encoded2ndByte >> (j)
+				//Append bits to spare and the bits that belongs to the second hamming block
+				encoded2ndByte = bitsToSpare | encoded2ndByte
+				encoded2ndByte >>= 1
+				//Save bits that does not belong to the hamming block for the next iteration
+				bitsToSpare = file[i+1] & (byte(exp(j+1)) - 1)
+				//Append 2nd decoded half to decodedByte
+				decoded2ndByte = decode7(encoded2ndByte)
+				decodedByte = decoded1stByte | decoded2ndByte
+			}
 			//Append decodedByte to ret
 			ret = append(ret, decodedByte)
 			j++
 			bitsToSpare = bitsToSpare << (8 - j)
+
 		}
 		if j > 7 {
 			j = 0
 		}
 	}
-	ret = append(ret, file[len(file)-1])
 	return ret
 }
 
