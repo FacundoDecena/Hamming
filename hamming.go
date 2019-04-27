@@ -74,78 +74,38 @@ func hamming7(file []byte) []byte {
 	mask1 := 240
 	//Mask that shows last bits
 	mask2 := 15
+	entryLength := len(file)
+	//Number that I use so that the size of the array is a multiple of 8, thus making compression simpler
 	module := 0
-	if 2*len(file)%8 != 0 {
-		module = 8 - 2*len(file)%8
+	if 2*entryLength%8 != 0 {
+		module = 8 - 2*entryLength%8
 	}
-	var ret = make([]byte, 2*len(file))
+	auxLength := 2*entryLength + module
+	finalLength := int(math.Ceil(float64(entryLength) * 1.75))
+	var auxArray = make([]byte, auxLength)
 	//Applies the hamming encode to each byte of the file
-	for i := 0; i < len(file); i++ {
+	for i := 0; i < entryLength; i++ {
 		var firstBits, lastBits []byte
 		firstBits = append(firstBits, (file[i]&uint8(mask1))>>4)
 		lastBits = append(lastBits, file[i]&uint8(mask2))
-		ret[2*i] = encode(8, firstBits)[0]
-		ret[2*i+1] = encode(8, lastBits)[0]
+		auxArray[2*i] = encode(8, firstBits)[0]
+		auxArray[2*i+1] = encode(8, lastBits)[0]
 	}
 	j := 0
-	bytesProtegidos := make([]byte, 2*len(file)+module-1)
-	for i := 0; i < 2*len(file); i += 8 {
-		sevenBlock := moveBits(ret[i : i+8])
-		bytesProtegidos[j] = sevenBlock[0]
-		bytesProtegidos[j+1] = sevenBlock[1]
-		bytesProtegidos[j+2] = sevenBlock[2]
-		bytesProtegidos[j+3] = sevenBlock[3]
-		bytesProtegidos[j+4] = sevenBlock[4]
-		bytesProtegidos[j+5] = sevenBlock[5]
-		bytesProtegidos[j+6] = sevenBlock[6]
+	ret := make([]byte, auxLength)
+	//Compress the array
+	for i := 0; i < auxLength; i += 8 {
+		sevenBlock := moveBits(auxArray[i : i+8])
+		ret[j] = sevenBlock[0]
+		ret[j+1] = sevenBlock[1]
+		ret[j+2] = sevenBlock[2]
+		ret[j+3] = sevenBlock[3]
+		ret[j+4] = sevenBlock[4]
+		ret[j+5] = sevenBlock[5]
+		ret[j+6] = sevenBlock[6]
 		j += 7
 	}
-	return bytesProtegidos[0:int(math.Ceil(float64(len(file))*1.75))]
-	/*
-
-		//Encoded byte slice
-		var ret []byte
-		//Var j indicates the index of block attached
-		j := 0
-		//x is a complete byte, y is an incomplete byte
-		var x, y byte
-		for i := 0; i < len(file); i++ {
-			//Add mask
-			hammingMaskedFirst := make([]byte, 1)
-			hammingMaskedFirst[0] = file[i] & uint8(maskFirst)
-			//Move to last positions
-			hammingMaskedFirst[0] >>= 4
-			//Add mask
-			hammingMaskedLast := make([]byte, 1)
-			hammingMaskedLast[0] = file[i] & uint8(maskLast)
-			//Put extra bit on the right
-			maskedFirst := encode(8, hammingMaskedFirst)[0]
-			//Accommodate the byte so that the unused bit go to the right
-			maskedFirst = maskedFirst << 1
-			//Put extra bit on the right
-			maskedLast := encode(8, hammingMaskedLast)[0]
-			//Accommodate the byte so that the unused bit go to the right
-			maskedLast = maskedLast << 1
-			//If j==0 maskedFirst can go directly to ret, otherwise has to wait next byte to complete
-			if j == 0 {
-				maskedFirst, maskedLast = compress7(maskedFirst, maskedLast, j)
-				ret = append(ret, maskedFirst)
-				y = maskedLast
-			} else if j < 8 {
-				//now y is complete, then is saved in x and can be append to ret
-				x, y = compress7(y, maskedFirst, j)
-				ret = append(ret, x)
-				//we can complete y with maskedLast first j bits, after that y meets the conditions to be x
-				x, y = compress7(y, maskedLast, j)
-				ret = append(ret, x)
-			} else {
-				//Restart the process
-				j = 0
-			}
-			j++
-		}
-		return ret
-	*/
+	return ret[0:finalLength]
 }
 
 func moveBits(bp []byte) [7]byte {
