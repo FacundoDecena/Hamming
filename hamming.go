@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"strings"
 	"time"
@@ -70,66 +71,100 @@ func preHamming7() {
 // Receives a byte slice, returns it encoded
 func hamming7(file []byte) []byte {
 	//Mask that shows first bits
-	maskFirst := 240
+	mask1 := 240
 	//Mask that shows last bits
-	maskLast := 15
-	//Encoded byte slice
-	var ret []byte
-	//Var j indicates the index of block attached
-	j := 0
-	//x is a complete byte, y is an incomplete byte
-	var x, y byte
-
-	for i := 0; i < len(file); i++ {
-		//Add mask
-		hammingMaskedFirst := make([]byte, 1)
-		hammingMaskedFirst[0] = file[i] & uint8(maskFirst)
-		//Move to last positions
-		hammingMaskedFirst[0] /= 16
-		//Add mask
-		hammingMaskedLast := make([]byte, 1)
-		hammingMaskedLast[0] = file[i] & uint8(maskLast)
-		//Put extra bit on the right
-		maskedFirst := encode(8, hammingMaskedFirst)[0]
-		//Put extra bit on the right
-		maskedLast := encode(8, hammingMaskedLast)[0]
-		//If j==0 maskedFirst can go directly to ret, otherwise has to wait next byte to complete
-		if j == 0 {
-			maskedFirst, maskedLast = compress7(maskedFirst, maskedLast, j)
-			ret = append(ret, maskedFirst)
-			y = maskedLast
-		} else if j < 8 {
-			//now y is complete, then is saved in x and can be append to ret
-			x, y = compress7(y, maskedFirst, j)
-			ret = append(ret, x)
-			//we can complete y with maskedLast first j bits, after that y meets the conditions to be x
-			x, y = compress7(y, maskedLast, j)
-			ret = append(ret, x)
-		} else {
-			//Restart the process
-			j = 0
-		}
-		j++
+	mask2 := 15
+	module := 0
+	if 2*len(file)%8 != 0 {
+		module = 8 - 2*len(file)%8
 	}
-	return ret
+	var ret = make([]byte, 2*len(file))
+	//Applies the hamming encode to each byte of the file
+	for i := 0; i < len(file); i++ {
+		var firstBits, lastBits []byte
+		firstBits = append(firstBits, (file[i]&uint8(mask1))>>4)
+		lastBits = append(lastBits, file[i]&uint8(mask2))
+		ret[2*i] = encode(8, firstBits)[0]
+		ret[2*i+1] = encode(8, lastBits)[0]
+	}
+	j := 0
+	bytesProtegidos := make([]byte, 2*len(file)+module-1)
+	for i := 0; i < 2*len(file); i += 8 {
+		sevenBlock := moveBits(ret[i : i+8])
+		bytesProtegidos[j] = sevenBlock[0]
+		bytesProtegidos[j+1] = sevenBlock[1]
+		bytesProtegidos[j+2] = sevenBlock[2]
+		bytesProtegidos[j+3] = sevenBlock[3]
+		bytesProtegidos[j+4] = sevenBlock[4]
+		bytesProtegidos[j+5] = sevenBlock[5]
+		bytesProtegidos[j+6] = sevenBlock[6]
+		j += 7
+	}
+	return bytesProtegidos[0:int(math.Ceil(float64(len(file))*1.75))]
+	/*
+
+		//Encoded byte slice
+		var ret []byte
+		//Var j indicates the index of block attached
+		j := 0
+		//x is a complete byte, y is an incomplete byte
+		var x, y byte
+		for i := 0; i < len(file); i++ {
+			//Add mask
+			hammingMaskedFirst := make([]byte, 1)
+			hammingMaskedFirst[0] = file[i] & uint8(maskFirst)
+			//Move to last positions
+			hammingMaskedFirst[0] >>= 4
+			//Add mask
+			hammingMaskedLast := make([]byte, 1)
+			hammingMaskedLast[0] = file[i] & uint8(maskLast)
+			//Put extra bit on the right
+			maskedFirst := encode(8, hammingMaskedFirst)[0]
+			//Accommodate the byte so that the unused bit go to the right
+			maskedFirst = maskedFirst << 1
+			//Put extra bit on the right
+			maskedLast := encode(8, hammingMaskedLast)[0]
+			//Accommodate the byte so that the unused bit go to the right
+			maskedLast = maskedLast << 1
+			//If j==0 maskedFirst can go directly to ret, otherwise has to wait next byte to complete
+			if j == 0 {
+				maskedFirst, maskedLast = compress7(maskedFirst, maskedLast, j)
+				ret = append(ret, maskedFirst)
+				y = maskedLast
+			} else if j < 8 {
+				//now y is complete, then is saved in x and can be append to ret
+				x, y = compress7(y, maskedFirst, j)
+				ret = append(ret, x)
+				//we can complete y with maskedLast first j bits, after that y meets the conditions to be x
+				x, y = compress7(y, maskedLast, j)
+				ret = append(ret, x)
+			} else {
+				//Restart the process
+				j = 0
+			}
+			j++
+		}
+		return ret
+	*/
 }
 
-//Joins x and y, returns y moved to the left
-func compress7(x byte, y byte, index int) (byte, byte) {
-	//My implementation for **
-	exp := 1
-	i := uint8(7 - index)
-	for ; i > 0; i-- {
-		exp *= 2
-	}
-	//Mask the bits we need
-	y1 := y & uint8(exp) >> uint8(7-index)
-	//Join x with the bits above
-	x = x | y1
-	//Move y index+1 places to the left
-	y = y << uint8(index+1)
-
-	return x, y
+func moveBits(bp []byte) [7]byte {
+	var ba [7]byte
+	ba[0] = bp[0]
+	ba[0] = ba[0] | ((bp[1] & 128) >> 7)
+	ba[1] = bp[1] << 1
+	ba[1] = ba[1] | ((bp[2] & 192) >> 6)
+	ba[2] = bp[2] << 2
+	ba[2] = ba[2] | ((bp[3] & 224) >> 5)
+	ba[3] = bp[3] << 3
+	ba[3] = ba[3] | ((bp[4] & 240) >> 4)
+	ba[4] = bp[4] << 4
+	ba[4] = ba[4] | ((bp[5] & 248) >> 3)
+	ba[5] = bp[5] << 5
+	ba[5] = ba[5] | ((bp[6] & 252) >> 2)
+	ba[6] = bp[6] << 6
+	ba[6] = ba[6] | (bp[7] >> 1)
+	return ba
 }
 
 //Size should be: 8 for hamming7, 32 for hamming 32, 1024 for hamming 1024 and 32768 for hamming 32768
@@ -143,28 +178,28 @@ func encode(size int, input []byte) []byte {
 	case 8:
 		position = 0
 		numberOfByte = 0
-		controlBitsQuantity = 2
+		controlBitsQuantity = 4
 	case 32:
 		position = 6
 		numberOfByte = 3
-		controlBitsQuantity = 4
+		controlBitsQuantity = 6
 	case 1024:
 		position = 3
 		numberOfByte = 126
-		controlBitsQuantity = 9
+		controlBitsQuantity = 11
 	case 32768:
 		position = 0
 		numberOfByte = 4095
-		controlBitsQuantity = 14
+		controlBitsQuantity = 16
 	default:
 		return nil
 	}
 	//Data bits accommodate process
-	for i := 0; i < controlBitsQuantity+1; i++ {
-		il := expInt(i) - 1
-		sl := expInt(i+1) - 1
-		for j := il + 1; j < sl; j++ {
-			dataBit := takeBit(input[numberOfByte], position, int(j%8))
+	for i := controlBitsQuantity - 1; i > 0; i-- {
+		sl := expInt(i) - 1
+		il := expInt(i-1) - 1
+		for j := sl - 1; j > il; j-- {
+			dataBit := takeBit(input[numberOfByte], position, inverse(int(j%8)))
 			x := byteNumber(int(j), size/8)
 			encoded[x] = encoded[x] | dataBit
 			position++
@@ -175,16 +210,16 @@ func encode(size int, input []byte) []byte {
 		}
 	}
 	//Control bits calculus process
-	for i := 0; i < controlBitsQuantity+1; i++ {
+	for i := 0; i < controlBitsQuantity-1; i++ {
 		parity := byte(0)
 		for j := expInt(i) - 1; j < size; j += expInt(i + 1) {
 			for k := 0; k < expInt(i); k++ {
-				parity = parity ^ takeBit(encoded[byteNumber(j+int(k), size/8)], int((j+k)%8), 0)
+				parity ^= takeBit(encoded[byteNumber(j+int(k), size/8)], inverse(int((j+k)%8)), 0)
 			}
 		}
-		if takeBit(parity, 0, 0) != 0 {
+		if takeBit(parity, 0, 7) != 0 {
 			x := byteNumber(int(expInt(i)-1), size/8)
-			encoded[x] = encoded[x] | takeBit(1, 0, int(expInt(i)-1)%8)
+			encoded[x] = encoded[x] | takeBit(1, 0, inverse(int(expInt(i)-1)%8))
 		}
 	}
 	return encoded
@@ -226,4 +261,28 @@ func expInt(exponent int) int {
 		result *= 2
 	}
 	return result
+}
+
+//Function necessary so that the position in a byte of a bit has the notation used in Hamming
+func inverse(entry int) int {
+	switch entry {
+	case 0:
+		return 7
+	case 1:
+		return 6
+	case 2:
+		return 5
+	case 3:
+		return 4
+	case 4:
+		return 3
+	case 5:
+		return 2
+	case 6:
+		return 1
+	case 7:
+		return 0
+	default:
+		return -1
+	}
 }
