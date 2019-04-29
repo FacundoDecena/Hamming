@@ -5,6 +5,21 @@ import (
 	"math"
 )
 
+func callTakeBits(body []byte) (Array [][]byte) {
+	var TrashBits int
+	var bytes []byte
+
+	TrashBits = 0
+
+	for body != nil {
+		bytes, body, TrashBits = takeBits(1013, body, TrashBits)
+
+		Array = append(Array, bytes)
+	}
+	return Array
+
+}
+
 func takeBits(bits int, body []byte, NumberOfTrashBits int) ([]byte, []byte, int) {
 
 	var cantByte int
