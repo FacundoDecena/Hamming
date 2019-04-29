@@ -36,13 +36,11 @@ func DeHamming() {
 
 func preDeHamming7() {
 	var fileName string
-	var body, testBody []byte
+	var body []byte
 	var err error
 	var start time.Time
 	r := bufio.NewReader(os.Stdin)
 
-	testBody = append(testBody, 205, 155, 54, 156, 208, 199, 165, 205, 155, 54, 156, 208, 199, 165)
-	saveFile("test.ha1", testBody)
 	clearScreen()
 	fmt.Println("Ingrese el nombre del archivo .ha1")
 	_, _ = fmt.Fscanf(r, "%s", &fileName)
@@ -113,6 +111,10 @@ func deHamming7(file []byte) (ret []byte) {
 			//Save bits that does not belong to the hamming block
 			bitsToSpare = file[i] & (byte(exp(j+1)) - 1)
 			j++
+			if j%7 == 0 && i > 0 {
+				i--
+				decodedByte = decoded1stByte | bitsToSpare
+			}
 			if i+1 == len(file) {
 				decodedByte = decoded1stByte | bitsToSpare
 			} else {
@@ -135,7 +137,6 @@ func deHamming7(file []byte) (ret []byte) {
 			ret = append(ret, decodedByte)
 			j++
 			bitsToSpare = bitsToSpare << (8 - j)
-
 		}
 		if j > 7 {
 			j = 0
