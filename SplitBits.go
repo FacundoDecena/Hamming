@@ -5,14 +5,14 @@ import (
 	"math"
 )
 
-func callTakeBits(body []byte) (Array [][]byte) {
+func callTakeBits(hMBits int, body []byte) (Array [][]byte) {
 	var TrashBits int
 	var bytes []byte
 
 	TrashBits = 0
 
 	for body != nil {
-		bytes, body, TrashBits = takeBits(1013, body, TrashBits)
+		bytes, body, TrashBits = takeBits(hMBits, body, TrashBits)
 
 		Array = append(Array, bytes)
 	}

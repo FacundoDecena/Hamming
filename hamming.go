@@ -145,22 +145,28 @@ func moveBits(bp []byte) [7]byte {
 }
 
 func hamming(size int, file []byte) []byte {
+	var ret []byte
 	switch size {
 	case 32:
-		x, _, _ := takeBits(26, file, 0)
-		callEncode(32, x)
+		x := callTakeBits(26, file)
+		ret = callEncode(size, x)
 	case 1024:
-		x, _, _ := takeBits(1013, file, 0)
-		callEncode(1024, x)
+		x := callTakeBits(1013, file)
+		ret = callEncode(size, x)
 	case 32768:
-		x, _, _ := takeBits(26, file, 0)
-		callEncode(32, x)
+		x := callTakeBits(32752, file)
+		ret = callEncode(size, x)
 	}
+	return ret
 }
 
-func callEncode(size int, inputFile [][]byte) (outPut [][]byte) {
+func callEncode(size int, inputFile [][]byte) (outPut []byte) {
+	var aux [][]byte
 	for i := 0; i < len(inputFile); i++ {
-		outPut[i] = encode(size, inputFile[i])
+		aux = append(aux, encode(size, inputFile[i]))
+		for j := 0; j < len(aux[i]); j += len(aux[i]) {
+			outPut = append(outPut, aux[i][j])
+		}
 	}
 	return outPut
 }
