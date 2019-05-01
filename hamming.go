@@ -27,7 +27,13 @@ func Hamming() {
 		_, _ = fmt.Fscanf(r, "%d", &dhOp)
 		switch dhOp {
 		case 1:
-			preHamming7()
+			preHamming(7)
+		case 2:
+			preHamming(32)
+		case 3:
+			preHamming(1024)
+		case 4:
+			preHamming(32768)
 		case 5:
 			dhContinue_ = false
 		}
@@ -36,7 +42,7 @@ func Hamming() {
 
 }
 
-func preHamming7() {
+func preHamming(size int) {
 	var fileName string
 	var encodedBody []byte
 	r := bufio.NewReader(os.Stdin)
@@ -54,7 +60,18 @@ func preHamming7() {
 	} else {
 		//Start the timer
 		start = time.Now()
-		encodedBody = hamming7(body)
+		switch size {
+		case 7:
+			encodedBody = hamming7(body)
+		case 32:
+			encodedBody = hamming(size, body)
+		case 1024:
+			encodedBody = hamming(size, body)
+		case 32768:
+			encodedBody = hamming(size, body)
+
+		}
+
 		fileName = strings.Replace(fileName, ".txt", ".ha1", -1)
 		err = saveFile(fileName, encodedBody)
 		if err != nil {
@@ -127,6 +144,33 @@ func moveBits(bp []byte) [7]byte {
 	return ba
 }
 
+func hamming(size int, file []byte) []byte {
+	var ret []byte
+	switch size {
+	case 32:
+		x := callTakeBits(26, file)
+		ret = callEncode(size, x)
+	case 1024:
+		x := callTakeBits(1013, file)
+		ret = callEncode(size, x)
+	case 32768:
+		x := callTakeBits(32752, file)
+		ret = callEncode(size, x)
+	}
+	return ret
+}
+
+func callEncode(size int, inputFile [][]byte) (outPut []byte) {
+	var aux [][]byte
+	for i := 0; i < len(inputFile); i++ {
+		aux = append(aux, encode(size, inputFile[i]))
+		for j := 0; j < len(aux[i]); j += len(aux[i]) {
+			outPut = append(outPut, aux[i][j])
+		}
+	}
+	return outPut
+}
+
 //Size should be: 8 for hamming7, 32 for hamming 32, 1024 for hamming 1024 and 32768 for hamming 32768
 func encode(size int, input []byte) []byte {
 	encoded := make([]byte, int(size/8))
@@ -159,7 +203,7 @@ func encode(size int, input []byte) []byte {
 		sl := expInt(i) - 1
 		il := expInt(i-1) - 1
 		for j := sl - 1; j > il; j-- {
-			dataBit := takeBit(input[numberOfByte], position, inverse(int(j%8)))
+			dataBit := takeBit(input[numberOfByte], position, 7-int(j%8))
 			x := byteNumber(int(j), size/8)
 			encoded[x] = encoded[x] | dataBit
 			position++
@@ -174,12 +218,12 @@ func encode(size int, input []byte) []byte {
 		parity := byte(0)
 		for j := expInt(i) - 1; j < size; j += expInt(i + 1) {
 			for k := 0; k < expInt(i); k++ {
-				parity ^= takeBit(encoded[byteNumber(j+int(k), size/8)], inverse(int((j+k)%8)), 0)
+				parity ^= takeBit(encoded[byteNumber(j+int(k), size/8)], 7-(int((j+k)%8)), 0)
 			}
 		}
 		if takeBit(parity, 0, 7) != 0 {
 			x := byteNumber(int(expInt(i)-1), size/8)
-			encoded[x] = encoded[x] | takeBit(1, 0, inverse(int(expInt(i)-1)%8))
+			encoded[x] = encoded[x] | takeBit(1, 0, 7-(int(expInt(i)-1)%8))
 		}
 	}
 	return encoded
@@ -221,28 +265,4 @@ func expInt(exponent int) int {
 		result *= 2
 	}
 	return result
-}
-
-//Function necessary so that the position in a byte of a bit has the notation used in Hamming
-func inverse(entry int) int {
-	switch entry {
-	case 0:
-		return 7
-	case 1:
-		return 6
-	case 2:
-		return 5
-	case 3:
-		return 4
-	case 4:
-		return 3
-	case 5:
-		return 2
-	case 6:
-		return 1
-	case 7:
-		return 0
-	default:
-		return -1
-	}
 }
