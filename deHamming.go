@@ -128,15 +128,22 @@ func decode7(bait byte) (s byte) {
 	d3 := (bait & uint8(2)) >> 1
 	d4 := (bait & uint8(1)) >> 0
 	//Calculate sindrome using xor
-	s1 := c1 ^ d1 ^ d2 ^ d4<<0
-	s2 := c2 ^ d1 ^ d3 ^ d4<<1
-	s3 := c3 ^ d2 ^ d3 ^ d4<<2
+	var s1, s2, s3 byte
+
+	s1 = (c1 ^ d1 ^ d2 ^ d4) << 0
+	s2 = (c2 ^ d1 ^ d3 ^ d4) << 1
+	s3 = (c3 ^ d2 ^ d3 ^ d4) << 2
 
 	s = s1 | s2 | s3
 
 	if s != 0 {
-		correct(bait, s)
+		bait = correct(bait, s)
 	}
+
+	d1 = (bait & uint8(16)) >> 4
+	d2 = (bait & uint8(4)) >> 2
+	d3 = (bait & uint8(2)) >> 1
+	d4 = (bait & uint8(1)) >> 0
 
 	d1 = d1 << 3
 	d2 = d2 << 2
