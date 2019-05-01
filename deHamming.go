@@ -76,13 +76,13 @@ func deHamming7(file []byte) (ret []byte) {
 			//Select the first 7-j bits
 			encoded1stByte = file[i] & (two55 << (j + 1))
 			encoded1stByte >>= 1
-			//Save bits that does not belong to the hamming block
-			bitsToSpare = file[i] & (byte(exp(j+1)) - 1)
 			//Append decoded half to decodedByte
 			decoded1stByte = decode7(encoded1stByte) << 4
-			j++
+			//Save bits that does not belong to the hamming block
+			bitsToSpare = file[i] & (byte(exp(j+1)) - 1)
 			//Move bits to their place
-			bitsToSpare = bitsToSpare << (8 - j)
+			bitsToSpare = bitsToSpare << (7 - j)
+			j++
 			//Select second hamming block
 			encoded2ndByte = file[i+1] & (two55 << (j + 1))
 			//Move the slice of block to its position
@@ -164,7 +164,7 @@ func decode7(bait byte) (s byte) {
 		correct(bait)
 	}
 
-	d1 = d1 << 4
+	d1 = d1 << 3
 	d2 = d2 << 2
 	d3 = d3 << 1
 	d4 = d4 << 0
