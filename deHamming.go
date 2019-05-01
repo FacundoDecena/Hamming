@@ -135,7 +135,7 @@ func decode7(bait byte) (s byte) {
 	s = s1 | s2 | s3
 
 	if s != 0 {
-		correct(bait)
+		correct(bait, s)
 	}
 
 	d1 = d1 << 3
@@ -147,8 +147,21 @@ func decode7(bait byte) (s byte) {
 	return s
 }
 
-func correct(wrong byte) (corrected byte) {
-	return wrong
+func correct(bait byte, syndrome byte) (corrected byte) {
+	//Get the wrong bit
+	mistake := bait & byte(exp(7-syndrome))
+	//If it is 0, the only way to know its position is using the same power of 2
+	if mistake == 0 {
+		mistake = byte(exp(7 - syndrome))
+	} else { //If the bit is 1 it has to be 0
+		mistake = 0
+	}
+	//wom comes from Without Mistake, which is bait with 0 in the position of the mistake
+	wom := bait & (255 - byte(exp(7-syndrome)))
+
+	corrected = wom | mistake
+
+	return corrected
 }
 
 func exp(exponent byte) (ret int) {
