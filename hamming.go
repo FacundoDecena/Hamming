@@ -10,6 +10,11 @@ import (
 	"time"
 )
 
+var tiempoControlCalculus time.Duration
+var tiempoAccomodateBits time.Duration
+var tiempoAccomodateArray time.Duration
+var tiempoTakeBits time.Duration
+
 func Hamming() {
 	var dhOp int
 	r := bufio.NewReader(os.Stdin)
@@ -59,7 +64,7 @@ func preHamming(size int) {
 		fmt.Println(err)
 	} else {
 		//Start the timer
-		start = time.Now()
+		//start = time.Now()
 		switch size {
 		case 7:
 			encodedBody = hamming7(body)
@@ -80,7 +85,11 @@ func preHamming(size int) {
 
 	}
 	elapsed := time.Since(start)
-	log.Printf("\nHamming7 took %s", elapsed)
+	log.Printf("\nHamming took %s", elapsed)
+	log.Printf("\nCalculoBits took %s", tiempoControlCalculus)
+	log.Printf("\nAcomodarArreglo took %s", tiempoAccomodateArray)
+	log.Printf("\nAcomodarBits took %s", tiempoAccomodateBits)
+	log.Printf("\nTomarBits took %s", tiempoTakeBits)
 	_, _ = fmt.Fscanf(r, "%s")
 	_, _ = fmt.Fscanf(r, "%s")
 }
@@ -102,17 +111,17 @@ func hamming7(file []byte) []byte {
 	var auxArray = make([]byte, auxLength)
 	//Applies the hamming encode to each byte of the file
 	for i := 0; i < entryLength; i++ {
-		var firstBits, lastBits []byte
-		firstBits = append(firstBits, (file[i]&uint8(mask1))>>4)
-		lastBits = append(lastBits, file[i]&uint8(mask2))
-		auxArray[2*i] = encode(8, firstBits)[0]
-		auxArray[2*i+1] = encode(8, lastBits)[0]
+		var firstBits, lastBits byte
+		firstBits = (file[i] & uint8(mask1)) >> 4
+		lastBits = file[i] & uint8(mask2)
+		auxArray[2*i] = encode7(firstBits)
+		auxArray[2*i+1] = encode7(lastBits)
 	}
 	j := 0
 	ret := make([]byte, auxLength)
 	//Compress the array
 	for i := 0; i < auxLength; i += 8 {
-		sevenBlock := moveBits(auxArray[i : i+8])
+		sevenBlock := compressBlock(auxArray[i : i+8])
 		ret[j] = sevenBlock[0]
 		ret[j+1] = sevenBlock[1]
 		ret[j+2] = sevenBlock[2]
@@ -125,7 +134,28 @@ func hamming7(file []byte) []byte {
 	return ret[0:finalLength]
 }
 
-func moveBits(bp []byte) [7]byte {
+func encode7(bait byte) byte {
+	//Get bits from position in brackets and send it to the left
+	d4 := bait & uint8(1)
+	d3 := (bait & uint8(2)) >> 1
+	d2 := (bait & uint8(4)) >> 2
+	d1 := (bait & uint8(8)) >> 3
+	//Calculate controls using xor
+	c1 := d1 ^ d2 ^ d4
+	c2 := d1 ^ d3 ^ d4
+	c3 := d2 ^ d3 ^ d4
+	//set variables in their position
+	c1 <<= 7
+	c2 <<= 6
+	d1 <<= 5
+	c3 <<= 4
+	d2 <<= 3
+	d3 <<= 2
+	d4 <<= 1
+	return d4 | d3 | d2 | c3 | d1 | c2 | c1
+}
+
+func compressBlock(bp []byte) [7]byte {
 	var ba [7]byte
 	ba[0] = bp[0]
 	ba[0] = ba[0] | ((bp[1] & 128) >> 7)
@@ -148,8 +178,11 @@ func hamming(size int, file []byte) []byte {
 	var ret []byte
 	switch size {
 	case 32:
+		start := time.Now()
 		x := callTakeBits(26, file)
+		tiempoTakeBits += time.Since(start)
 		ret = callEncode(size, x)
+
 	case 1024:
 		x := callTakeBits(1013, file)
 		ret = callEncode(size, x)
@@ -161,43 +194,24 @@ func hamming(size int, file []byte) []byte {
 }
 
 func callEncode(size int, inputFile [][]byte) (outPut []byte) {
+	position, numberOfByte, controlBitsQuantity := initialCase(size)
 	var aux [][]byte
 	for i := 0; i < len(inputFile); i++ {
-		aux = append(aux, encode(size, inputFile[i]))
+		aux = append(aux, encode(size, inputFile[i], position, numberOfByte, controlBitsQuantity))
+		start := time.Now()
 		for j := 0; j < len(aux[i]); j += len(aux[i]) {
 			outPut = append(outPut, aux[i][j])
 		}
+		tiempoAccomodateArray += time.Since(start)
+		fmt.Printf("%d %d %fcompletado\n", i, len(inputFile), int(((i+1)/len(inputFile))*100))
 	}
 	return outPut
 }
 
 //Size should be: 8 for hamming7, 32 for hamming 32, 1024 for hamming 1024 and 32768 for hamming 32768
-func encode(size int, input []byte) []byte {
+func encode(size int, input []byte, position int, numberOfByte int, controlBitsQuantity int) []byte {
 	encoded := make([]byte, int(size/8))
-	var position int
-	var numberOfByte int
-	var controlBitsQuantity int
-	//Set the initial position where is the first information bit in the array passed by parameter depending of what hamming will be apply
-	switch size {
-	case 8:
-		position = 0
-		numberOfByte = 0
-		controlBitsQuantity = 4
-	case 32:
-		position = 6
-		numberOfByte = 3
-		controlBitsQuantity = 6
-	case 1024:
-		position = 3
-		numberOfByte = 126
-		controlBitsQuantity = 11
-	case 32768:
-		position = 0
-		numberOfByte = 4095
-		controlBitsQuantity = 16
-	default:
-		return nil
-	}
+	start1 := time.Now()
 	//Data bits accommodate process
 	for i := controlBitsQuantity - 1; i > 0; i-- {
 		sl := expInt(i) - 1
@@ -213,6 +227,8 @@ func encode(size int, input []byte) []byte {
 			}
 		}
 	}
+	tiempoAccomodateBits += time.Since(start1)
+	start2 := time.Now()
 	//Control bits calculus process
 	for i := 0; i < controlBitsQuantity-1; i++ {
 		parity := byte(0)
@@ -221,11 +237,10 @@ func encode(size int, input []byte) []byte {
 				parity ^= takeBit(encoded[byteNumber(j+int(k), size/8)], 7-(int((j+k)%8)), 0)
 			}
 		}
-		if takeBit(parity, 0, 7) != 0 {
-			x := byteNumber(int(expInt(i)-1), size/8)
-			encoded[x] = encoded[x] | takeBit(1, 0, 7-(int(expInt(i)-1)%8))
-		}
+		x := byteNumber(int(expInt(i)-1), size/8)
+		encoded[x] = encoded[x] | takeBit(1, 0, 7-(int(expInt(i)-1)%8))
 	}
+	tiempoControlCalculus += time.Since(start2)
 	return encoded
 }
 
@@ -265,4 +280,23 @@ func expInt(exponent int) int {
 		result *= 2
 	}
 	return result
+}
+
+func initialCase(size int) (position int, numberOfByte int, controlBitsQuantity int) {
+	//Set the initial position where is the first information bit in the array passed by parameter depending of what hamming will be apply
+	switch size {
+	case 32:
+		position = 6
+		numberOfByte = 3
+		controlBitsQuantity = 6
+	case 1024:
+		position = 3
+		numberOfByte = 126
+		controlBitsQuantity = 11
+	case 32768:
+		position = 0
+		numberOfByte = 4095
+		controlBitsQuantity = 16
+	}
+	return position, numberOfByte, controlBitsQuantity
 }
