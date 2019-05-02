@@ -10,11 +10,6 @@ import (
 	"time"
 )
 
-var tiempoControlCalculus time.Duration
-var tiempoAccomodateBits time.Duration
-var tiempoAccomodateArray time.Duration
-var tiempoTakeBits time.Duration
-
 func Hamming() {
 	var dhOp int
 	r := bufio.NewReader(os.Stdin)
@@ -51,20 +46,16 @@ func preHamming(size int) {
 	var fileName string
 	var encodedBody []byte
 	r := bufio.NewReader(os.Stdin)
-
 	clearScreen()
 	fmt.Println("Ingrese el nombre del archivo")
 	_, _ = fmt.Fscanf(r, "%s", &fileName)
 	//Since golang does not show the time a program runs...
 	start := time.Now()
-
 	body, err := loadFile(fileName)
-
 	if err != nil {
 		fmt.Println(err)
 	} else {
-		//Start the timer
-		//start = time.Now()
+		start = time.Now()
 		switch size {
 		case 7:
 			encodedBody = hamming7(body)
@@ -86,10 +77,6 @@ func preHamming(size int) {
 	}
 	elapsed := time.Since(start)
 	log.Printf("\nHamming took %s", elapsed)
-	log.Printf("\nCalculoBits took %s", tiempoControlCalculus)
-	log.Printf("\nAcomodarArreglo took %s", tiempoAccomodateArray)
-	log.Printf("\nAcomodarBits took %s", tiempoAccomodateBits)
-	log.Printf("\nTomarBits took %s", tiempoTakeBits)
 	_, _ = fmt.Fscanf(r, "%s")
 	_, _ = fmt.Fscanf(r, "%s")
 }
@@ -178,11 +165,8 @@ func hamming(size int, file []byte) []byte {
 	var ret []byte
 	switch size {
 	case 32:
-		start := time.Now()
 		x := callTakeBits(26, file)
-		tiempoTakeBits += time.Since(start)
 		ret = callEncode(size, x)
-
 	case 1024:
 		x := callTakeBits(1013, file)
 		ret = callEncode(size, x)
@@ -198,12 +182,9 @@ func callEncode(size int, inputFile [][]byte) (outPut []byte) {
 	var aux [][]byte
 	for i := 0; i < len(inputFile); i++ {
 		aux = append(aux, encode(size, inputFile[i], position, numberOfByte, controlBitsQuantity))
-		start := time.Now()
-		for j := 0; j < len(aux[i]); j += len(aux[i]) {
+		for j := 0; j < len(aux[i]); j++ {
 			outPut = append(outPut, aux[i][j])
 		}
-		tiempoAccomodateArray += time.Since(start)
-		fmt.Printf("%d %d %fcompletado\n", i, len(inputFile), int(((i+1)/len(inputFile))*100))
 	}
 	return outPut
 }
@@ -211,7 +192,6 @@ func callEncode(size int, inputFile [][]byte) (outPut []byte) {
 //Size should be: 8 for hamming7, 32 for hamming 32, 1024 for hamming 1024 and 32768 for hamming 32768
 func encode(size int, input []byte, position int, numberOfByte int, controlBitsQuantity int) []byte {
 	encoded := make([]byte, int(size/8))
-	start1 := time.Now()
 	//Data bits accommodate process
 	for i := controlBitsQuantity - 1; i > 0; i-- {
 		sl := expInt(i) - 1
@@ -227,8 +207,6 @@ func encode(size int, input []byte, position int, numberOfByte int, controlBitsQ
 			}
 		}
 	}
-	tiempoAccomodateBits += time.Since(start1)
-	start2 := time.Now()
 	//Control bits calculus process
 	for i := 0; i < controlBitsQuantity-1; i++ {
 		parity := byte(0)
@@ -238,9 +216,8 @@ func encode(size int, input []byte, position int, numberOfByte int, controlBitsQ
 			}
 		}
 		x := byteNumber(int(expInt(i)-1), size/8)
-		encoded[x] = encoded[x] | takeBit(1, 0, 7-(int(expInt(i)-1)%8))
+		encoded[x] = encoded[x] | takeBit(parity, 0, 7-(int(expInt(i)-1)%8))
 	}
-	tiempoControlCalculus += time.Since(start2)
 	return encoded
 }
 
@@ -262,7 +239,7 @@ func takeBit(source byte, initialPosition int, finalPosition int) byte {
 func byteNumber(bitPosition int, bytesQuantity int) int {
 	il := 0
 	sl := 7
-	for i := bytesQuantity - 1; i > 0; i-- {
+	for i := 0; i < bytesQuantity; i++ {
 		if bitPosition >= il && bitPosition <= sl {
 			return i
 		} else {
