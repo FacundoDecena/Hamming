@@ -38,11 +38,12 @@ func takeBits(bits int, body []byte, NumberOfTrashBits int) ([]byte, []byte, int
 	cantBit = bits - (cantByte * 8) // amount bits i need for the incomplete byte.
 
 	if bits >= 8 {
-
+		if len(body) <= cantByte {
+			finish = true
+		}
 		for index := 0; index <= cantByte; index++ {
 			if len(body) <= cantByte+1 {
 				body = append(body, uint8(0))
-				finish = true
 			}
 
 			// adjust //
@@ -57,6 +58,7 @@ func takeBits(bits int, body []byte, NumberOfTrashBits int) ([]byte, []byte, int
 			arr_bit = append(arr_bit, aux) // put it on the array.
 
 		}
+
 		if finish == true {
 			if cantBit > 0 {
 				bait = arr_bit[cantByte] // adjust the byte
