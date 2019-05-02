@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"strings"
 	"time"
@@ -27,6 +28,12 @@ func DeHamming() {
 		switch dhOp {
 		case 1:
 			preDeHamming7()
+		case 2:
+			preDeHamming(32)
+		case 3:
+			preDeHamming(1024)
+		case 4:
+			preDeHamming(32768)
 		case 5:
 			dhContinue_ = false
 		}
@@ -65,6 +72,35 @@ func preDeHamming7() {
 	_, _ = fmt.Scanf("%s")
 }
 
+func preDeHamming(size int) {
+	var fileName string
+	var body []byte
+	var err error
+	var start time.Time
+	r := bufio.NewReader(os.Stdin)
+	clearScreen()
+	fmt.Println("Ingrese el nombre del archivo .ha1")
+	_, _ = fmt.Fscanf(r, "%s", &fileName)
+
+	fileName += ".ha1"
+
+	body, err = loadFile(fileName)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	start = time.Now()
+	decodedFile := callDecode(size, body)
+	fileName = strings.Replace(fileName, ".ha1", ".deh", -1)
+	err = saveFile(fileName, decodedFile)
+	if err != nil {
+		fmt.Println(err)
+	}
+	elapsed := time.Since(start)
+	log.Printf("\nDeHamming took %s", elapsed)
+	_, _ = fmt.Scanf("%s")
+}
 func deHamming7(file []byte) (ret []byte) {
 	var encoded1stByte, encoded2ndByte, bitsToSpare, decoded1stByte, decoded2ndByte, decodedByte byte
 	bitsToSpare = 0
@@ -178,4 +214,48 @@ func exp(exponent byte) (ret int) {
 		ret *= 2
 	}
 	return ret
+}
+
+func callDecode(size int, input []byte) []byte {
+	var decodedFile []byte
+	_, _, controlBitsQuantity := initialCase(size)
+	blockSize := size / 8
+	il := 0
+	sl := blockSize
+	for i := 0; i < len(input); i += blockSize {
+		aux := decode(size, input[il:sl], controlBitsQuantity)
+		for j := 0; j < len(aux); j++ {
+			decodedFile = append(decodedFile, aux[j])
+		}
+		il += blockSize
+		sl += blockSize
+	}
+	return decodedFile
+}
+
+func decode(size int, input []byte, controlBitsQuantity int) []byte {
+	decoded := make([]byte, int(math.Ceil((float64(size)-float64(controlBitsQuantity))/8)))
+	decodedPosition := 0
+	decodedNumberOfByte := 0
+	for i := 0; i < controlBitsQuantity-1; i++ {
+		il := expInt(i) - 1
+		sl := expInt(i+1) - 1
+		for j := il + 1; j < sl; j++ {
+			position, numberOfByte := byteNumberDeHamming(j)
+			dataBit := takeBit(input[numberOfByte], 7-position, 7-decodedPosition)
+			decoded[decodedNumberOfByte] = decoded[decodedNumberOfByte] | dataBit
+			decodedPosition++
+			if decodedPosition > 7 {
+				decodedPosition = 0
+				decodedNumberOfByte++
+			}
+		}
+	}
+	return decoded
+}
+
+func byteNumberDeHamming(position int) (int, int) {
+	place := position % 8
+	byteNumber := position / 8
+	return place, byteNumber
 }
