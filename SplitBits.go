@@ -52,7 +52,6 @@ func takeBits(bits int, body []byte, NumberOfTrashBits int) ([]byte, []byte, int
 			bait_aux = bait_aux << uint(NumberOfTrashBits) // shift to left how many bits i need to remove
 			nextBait := body[index+1]
 			nextBait = nextBait >> uint(bitsToMove)
-			// fmt.Printf("bait_aux  %d : %08b d nextbait : %08b \n", index, bait_aux, nextBait)
 			aux := bait_aux | nextBait // merge the bytes to pass the bits from the next byte to thisone.
 
 			arr_bit = append(arr_bit, aux) // put it on the array.
@@ -66,8 +65,6 @@ func takeBits(bits int, body []byte, NumberOfTrashBits int) ([]byte, []byte, int
 				mask = doMask(cantBit) // make the mask by how many bits i need
 				bait = bait & mask     // make the byte
 
-				//fmt.Printf("voy a insertar %08b  mascara %08b\n", bait, mask)
-
 				arr_bit[cantByte] = bait // put the byte on the array.
 			}
 			body = nil
@@ -76,7 +73,6 @@ func takeBits(bits int, body []byte, NumberOfTrashBits int) ([]byte, []byte, int
 				bait = arr_bit[cantByte] // adjust the byte
 				mask = doMask(cantBit)   // make the mask by how many bits i need
 				bait = bait & mask       // make the byte
-				// fmt.Printf("voy a insertar %08b  mascara %08b\n", bait, mask)
 				arr_bit[cantByte] = bait // put the byte on the array.
 			}
 			NumberOfTrashBits += cantBit
@@ -89,10 +85,6 @@ func takeBits(bits int, body []byte, NumberOfTrashBits int) ([]byte, []byte, int
 			} else {
 				body = body[cantByte:] // adjust the array
 			}
-
-			// fmt.Printf("\nsaco los siguientes bits:\nbytes necesarios: %08b\n", arr_bit)
-			// fmt.Printf("\nsaco los siguientes bits:\nbytes necesarios: %d\n\n\n", arr_bit)
-			// fmt.Printf("numberoftrashbits: %d \n\n ", NumberOfTrashBits)
 
 		}
 		return arr_bit, body, NumberOfTrashBits
