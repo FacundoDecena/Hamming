@@ -1,16 +1,12 @@
 package Huffman
 
-import (
-	"fmt"
-)
-
-type node struct {
+type Item struct {
 	symbol byte
 	weight int
 }
 
-func toNode(table map[byte]int) (list []node) {
-	var newNode node
+func toNode(table map[byte]int) (list []Item) {
+	var newNode Item
 
 	for key, value := range table {
 		newNode.symbol = key
@@ -22,6 +18,6 @@ func toNode(table map[byte]int) (list []node) {
 
 }
 
-func parva(list []node) {
+func parva(list []Item) {
 
 }
