@@ -32,6 +32,8 @@ func IntroduceErrors() {
 	switch extension[1] {
 	case "ha1":
 		fileWithErrors = insertError7(body)
+		fmt.Println("Se han introducido errores de manera correcta.")
+		_, _ = fmt.Fscanf(r, "%s")
 	case "ha2":
 		fileWithErrors = insertError(body, 32)
 	case "ha3":
@@ -122,15 +124,18 @@ func compress7(file []byte) []byte {
 }
 
 func insertError(file []byte, kind int) (ret []byte) {
-	switch kind {
-	case 32:
-
-	case 1024:
-
-	case 32768:
-
+	var blocks [][]byte
+	var erroredBlock []byte
+	blocks = takeBlocks(file, kind)
+	for i := 0; i < len(blocks); i++ {
+		erroredBlock = randomErrors(blocks[i], kind)
+		fmt.Println(erroredBlock)
+		for j := 0; j < (kind / 8); j++ {
+			ret = append(ret, erroredBlock[j])
+		}
 	}
-	return ret
+
+	return ret[:len(file)]
 }
 
 func randomErrors7(bait byte) (ret byte) {
@@ -157,18 +162,49 @@ func randomErrors7(bait byte) (ret byte) {
 	return ret
 }
 
-func randomErrors(bait byte, kind int) (ret byte) {
+//randomErrors receives an array with a Hamming block and returns it with an error in it
+func randomErrors(input []byte, kind int) (ret []byte) {
 	if rand.Intn(2) == 0 { //Error does not correspond
-		ret = bait
+		ret = input
 	} else {
-		switch kind {
-		case 32:
-
-		case 1024:
-
-		case 32768:
-
+		blockSize := kind / 8
+		//Select random byte
+		targetedByte := rand.Intn(blockSize - 1)
+		bait := input[targetedByte]
+		//Select random position
+		position := byte(rand.Intn(8))
+		//Creates a mask
+		mask := exp(position)
+		//Get the targeted bit
+		target := bait & mask
+		//Introduce the error
+		if target == 0 {
+			target = mask
+		} else { //If the bit is 1 it has to be 0
+			target = 0
 		}
+		////wom comes from Without Mistake, which is bait with 0 in the position of the target
+		wom := bait & (255 - mask)
+		bait = wom | target
+		input[targetedByte] = bait
+	}
+	return input
+}
+
+//takeBlocks return an array with hamming blocks with size kind
+func takeBlocks(input []byte, kind int) (ret [][]byte) {
+	var length, blockSize int
+	length = len(input)
+	blockSize = kind / 8
+	for i := 0; i < length; i += blockSize {
+		tempArray := make([]byte, blockSize)
+		for j := 0; j < blockSize; j++ {
+			if i+j == length {
+				continue
+			}
+			tempArray[j] = input[i+j]
+		}
+		ret = append(ret, tempArray)
 	}
 	return ret
 }
