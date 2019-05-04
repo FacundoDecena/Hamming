@@ -233,6 +233,7 @@ func callDecode(size int, input []byte) []byte {
 	il := 0
 	sl := blockSize
 	for i := 0; i < len(input); i += blockSize {
+		checkError(size, input[il:sl], controlBitsQuantity)
 		aux := decode(size, input[il:sl], controlBitsQuantity)
 		for j := 0; j < len(aux); j++ {
 			decodedFile = append(decodedFile, aux[j])
@@ -240,6 +241,7 @@ func callDecode(size int, input []byte) []byte {
 		il += blockSize
 		sl += blockSize
 	}
+
 	return compress(decodedFile)
 }
 
@@ -392,4 +394,42 @@ func ajustBytes(input []byte, begin int) []byte {
 		ret[i] = aux[i]
 	}
 	return ret
+}
+
+func checkError(size int, input []byte, controlBitsQuantity int) {
+	syndrome := make([]byte, controlBitsQuantity)
+	//Control bits calculus process
+	for i := 0; i < controlBitsQuantity; i++ {
+		parity := byte(0)
+		for j := expInt(i) - 1; j < size; j += expInt(i + 1) {
+			for k := 0; k < expInt(i); k++ {
+				parity ^= takeBit(input[byteNumber(j+int(k), size/8)], 7-(int((j+k)%8)), 0)
+			}
+		}
+		syndrome[i] = parity
+	}
+	correct := true
+	for i := 0; i < len(syndrome); i++ {
+		if syndrome[i] == 1 {
+			correct = false
+			break
+		}
+	}
+	if !correct {
+		errorPosition := 0
+		for i := len(syndrome) - 1; i >= 0; i-- {
+			errorPosition += expInt(i) * int(syndrome[i])
+		}
+		numberOfByte := byteNumber(errorPosition-1, size/4)
+		position := (errorPosition - 1) % 8
+		mistake := input[numberOfByte] & exp(byte(7-position))
+		if mistake == 0 {
+			mistake = exp(byte(7 - position))
+		} else {
+			mistake = 0
+		}
+		//wom comes from Without Mistake, which is bait with 0 in the position of the mistake
+		wom := input[numberOfByte] & (255 - exp(byte(7-position)))
+		input[numberOfByte] = wom | mistake
+	}
 }
