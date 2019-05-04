@@ -34,10 +34,13 @@ func IntroduceErrors() {
 func errorsFactory(file []byte, extension string) (fileWithErrors []byte) {
 	switch extension {
 	case "ha1":
-		fileWithErrors = insertError(file, 7)
+		fileWithErrors = insertError(file, 1)
 	case "ha2":
+		fileWithErrors = insertError(file, 2)
 	case "ha3":
+		fileWithErrors = insertError(file, 3)
 	case "ha4":
+		fileWithErrors = insertError(file, 4)
 	}
 	return file
 }
