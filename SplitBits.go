@@ -30,7 +30,7 @@ func takeBits(bits int, body []byte, NumberOfTrashBits int) ([]byte, []byte, int
 	var finish bool
 	var bitsToMove int
 
-	// initialise variables //
+	// initialise variables
 
 	cantByte = bits / 8                // amount bytes i need.
 	bitsToMove = 8 - NumberOfTrashBits // how many bits i need to shift.
@@ -46,13 +46,13 @@ func takeBits(bits int, body []byte, NumberOfTrashBits int) ([]byte, []byte, int
 				body = append(body, uint8(0))
 			}
 
-			// adjust //
+			// adjust
 
 			bait_aux := body[index]
 			bait_aux = bait_aux << uint(NumberOfTrashBits) // shift to left how many bits i need to remove
 			nextBait := body[index+1]
 			nextBait = nextBait >> uint(bitsToMove)
-			aux := bait_aux | nextBait // merge the bytes to pass the bits from the next byte to thisone.
+			aux := bait_aux | nextBait // merge the bytes to pass the bits from the next byte to this one.
 
 			arr_bit = append(arr_bit, aux) // put it on the array.
 
