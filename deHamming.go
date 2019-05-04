@@ -68,7 +68,7 @@ func preDeHamming7() {
 func deHamming7(file []byte) (ret []byte) {
 	var encoded1stByte, encoded2ndByte, bitsToSpare, decoded1stByte, decoded2ndByte, decodedByte byte
 	bitsToSpare = 0
-	two55 := byte(exp(8)) - 1 // 255
+	two55 := exp(8) - 1 // 255
 	var j byte
 	j = 0
 	for i := 0; i < len(file); i += 2 {
@@ -83,7 +83,7 @@ func deHamming7(file []byte) (ret []byte) {
 		//Append decoded half to decodedByte
 		decoded1stByte = decode7(encoded1stByte) << 4
 		//Save bits that does not belong to the hamming block
-		bitsToSpare = file[i] & (byte(exp(j+1)) - 1)
+		bitsToSpare = file[i] & (exp(j+1) - 1)
 		j++
 		if j%7 == 0 && i > 0 {
 			i--
@@ -102,7 +102,7 @@ func deHamming7(file []byte) (ret []byte) {
 			encoded2ndByte = bitsToSpare | encoded2ndByte
 			encoded2ndByte >>= 1
 			//Save bits that does not belong to the hamming block for the next iteration
-			bitsToSpare = file[i+1] & (byte(exp(j+1)) - 1)
+			bitsToSpare = file[i+1] & (exp(j+1) - 1)
 			//Append 2nd decoded half to decodedByte
 			decoded2ndByte = decode7(encoded2ndByte)
 			decodedByte = decoded1stByte | decoded2ndByte
@@ -156,22 +156,22 @@ func decode7(bait byte) (s byte) {
 
 func correct(bait byte, syndrome byte) (corrected byte) {
 	//Get the wrong bit
-	mistake := bait & byte(exp(7-syndrome))
+	mistake := bait & exp(7-syndrome)
 	//If it is 0, the only way to know its position is using the same power of 2
 	if mistake == 0 {
-		mistake = byte(exp(7 - syndrome))
+		mistake = exp(7 - syndrome)
 	} else { //If the bit is 1 it has to be 0
 		mistake = 0
 	}
 	//wom comes from Without Mistake, which is bait with 0 in the position of the mistake
-	wom := bait & (255 - byte(exp(7-syndrome)))
+	wom := bait & (255 - exp(7-syndrome))
 
 	corrected = wom | mistake
 
 	return corrected
 }
 
-func exp(exponent byte) (ret int) {
+func exp(exponent byte) (ret byte) {
 	ret = 1
 	var i byte
 	for i = 0; i < exponent; i++ {
