@@ -110,7 +110,7 @@ func compress7(file []byte) []byte {
 	ret := make([]byte, auxLength)
 	//Compress the array
 	for i := 0; i < entryLength; i += 8 {
-		sevenBlock := moveBits(file[i : i+8])
+		sevenBlock := compressBlock(file[i : i+8])
 		ret[j] = sevenBlock[0]
 		ret[j+1] = sevenBlock[1]
 		ret[j+2] = sevenBlock[2]
