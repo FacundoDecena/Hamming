@@ -19,6 +19,7 @@ func callTakeBits(hMBits int, body []byte) (Array [][]byte) {
 	return Array
 
 }
+
 func takeBits(bits int, body []byte, NumberOfTrashBits int) ([]byte, []byte, int) {
 
 	var cantByte int
@@ -37,11 +38,12 @@ func takeBits(bits int, body []byte, NumberOfTrashBits int) ([]byte, []byte, int
 	cantBit = bits - (cantByte * 8) // amount bits i need for the incomplete byte.
 
 	if bits >= 8 {
-
-		for index := 0; index < cantByte; index++ {
-			if len(body) <= cantByte {
+		if len(body) <= cantByte {
+			finish = true
+		}
+		for index := 0; index <= cantByte; index++ {
+			if len(body) <= cantByte+1 {
 				body = append(body, uint8(0))
-				finish = true
 			}
 
 			// adjust //
@@ -50,27 +52,39 @@ func takeBits(bits int, body []byte, NumberOfTrashBits int) ([]byte, []byte, int
 			bait_aux = bait_aux << uint(NumberOfTrashBits) // shift to left how many bits i need to remove
 			nextBait := body[index+1]
 			nextBait = nextBait >> uint(bitsToMove)
-			body[index] = bait_aux | nextBait // merge the bytes to pass the bits from the next byte to thisone.
+			aux := bait_aux | nextBait // merge the bytes to pass the bits from the next byte to thisone.
 
-			arr_bit = append(arr_bit, body[index]) // put it on the array.
+			arr_bit = append(arr_bit, aux) // put it on the array.
 
 		}
-		if finish == true {
-			bait = body[cantByte] << uint(NumberOfTrashBits) // adjust the byte
 
-			mask = doMask(cantBit)          // make the mask by how many bits i need
-			bait = bait & mask              // make the byte
-			arr_bit = append(arr_bit, bait) // put the byte on the array.
+		if finish == true {
+			if cantBit > 0 {
+				bait = arr_bit[cantByte] // adjust the byte
+
+				mask = doMask(cantBit) // make the mask by how many bits i need
+				bait = bait & mask     // make the byte
+
+				arr_bit[cantByte] = bait // put the byte on the array.
+			}
 			body = nil
 		} else {
-
-			bait = body[cantByte] << uint(NumberOfTrashBits) // adjust the byte
-
-			mask = doMask(cantBit)          // make the mask by how many bits i need
-			bait = bait & mask              // make the byte
-			arr_bit = append(arr_bit, bait) // put the byte on the array.
+			if cantBit > 0 {
+				bait = arr_bit[cantByte] // adjust the byte
+				mask = doMask(cantBit)   // make the mask by how many bits i need
+				bait = bait & mask       // make the byte
+				arr_bit[cantByte] = bait // put the byte on the array.
+			}
 			NumberOfTrashBits += cantBit
-			body = body[cantByte:] // adjust the array
+
+			if NumberOfTrashBits >= 8 {
+
+				cutPosition := cantByte + (NumberOfTrashBits / 8)
+				NumberOfTrashBits = NumberOfTrashBits - 8
+				body = body[cutPosition:]
+			} else {
+				body = body[cantByte:] // adjust the array
+			}
 
 		}
 		return arr_bit, body, NumberOfTrashBits
