@@ -94,7 +94,8 @@ func takeBits(bits int, body []byte, NumberOfTrashBits int) ([]byte, []byte, int
 	}
 }
 
-func doMask(bits int) uint8 {
+//TODO: Pongan que pinchila hace porque la use pensando que hacia algo distinto
+func doMask(bits int) uint8 { //TODO: should return uint8 and error, not print the error.
 	if bits > 8 {
 		fmt.Printf("ERROR: WRONG MASK \n")
 
