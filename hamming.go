@@ -52,6 +52,7 @@ func preHamming(size int) {
 	//Since golang does not show the time a program runs...
 	start := time.Now()
 	body, err := loadFile(fileName)
+	var fileType string
 	if err != nil {
 		fmt.Println(err)
 	} else {
@@ -59,16 +60,20 @@ func preHamming(size int) {
 		switch size {
 		case 7:
 			encodedBody = hamming7(body)
+			fileType = ".ha1"
 		case 32:
 			encodedBody = hamming(size, body)
+			fileType = ".ha2"
 		case 1024:
 			encodedBody = hamming(size, body)
+			fileType = ".ha3"
 		case 32768:
 			encodedBody = hamming(size, body)
+			fileType = ".ha4"
 
 		}
 
-		fileName = strings.Replace(fileName, ".txt", ".ha1", -1)
+		fileName = strings.Replace(fileName, ".txt", fileType, -1)
 		err = saveFile(fileName, encodedBody)
 		if err != nil {
 			fmt.Println(err)
@@ -272,7 +277,7 @@ func initialCase(size int) (position int, numberOfByte int, controlBitsQuantity 
 		controlBitsQuantity = 11
 	case 32768:
 		position = 0
-		numberOfByte = 4095
+		numberOfByte = 4093
 		controlBitsQuantity = 16
 	}
 	return position, numberOfByte, controlBitsQuantity

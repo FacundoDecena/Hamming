@@ -79,10 +79,20 @@ func preDeHamming(size int) {
 	var start time.Time
 	r := bufio.NewReader(os.Stdin)
 	clearScreen()
-	fmt.Println("Ingrese el nombre del archivo .ha1")
+	var format string
+	switch size {
+	case 32:
+		format = "2"
+	case 1028:
+		format = "3"
+	case 32768:
+		format = "4"
+
+	}
+	fmt.Println("Ingrese el nombre del archivo .ha" + format)
 	_, _ = fmt.Fscanf(r, "%s", &fileName)
 
-	fileName += ".ha1"
+	fileName += ".ha" + format
 
 	body, err = loadFile(fileName)
 
@@ -92,7 +102,7 @@ func preDeHamming(size int) {
 	}
 	start = time.Now()
 	decodedFile := callDecode(size, body)
-	fileName = strings.Replace(fileName, ".ha1", ".deh", -1)
+	fileName = strings.Replace(fileName, ".ha"+format, ".deh", -1)
 	err = saveFile(fileName, decodedFile)
 	if err != nil {
 		fmt.Println(err)
@@ -230,7 +240,7 @@ func callDecode(size int, input []byte) []byte {
 		il += blockSize
 		sl += blockSize
 	}
-	return decodedFile
+	return compress(decodedFile)
 }
 
 func decode(size int, input []byte, controlBitsQuantity int) []byte {
@@ -258,4 +268,128 @@ func byteNumberDeHamming(position int) (int, int) {
 	place := position % 8
 	byteNumber := position / 8
 	return place, byteNumber
+}
+
+func compress(input []byte) []byte {
+	have := make([]int, len(input)/4)
+	need := make([]int, len(input)/4)
+	var compressed []byte //:= make([]byte, int(math.Ceil(float64(len(input))*3.25/float64(4))))
+	for i := 0; i < len(input)/4-1; i++ {
+		have[i] = 26
+		need[i] = 6
+	}
+	position := 2
+	for i := 0; i < len(input)/4-1; i++ {
+		if need[i]%8 == 0 {
+			position = 2
+			for j := 0; j < have[i]/8; j++ {
+				compressed = append(compressed, input[i*4+j])
+			}
+			for j := 0; j < need[i]/8; j++ {
+				compressed /*[i*4+have[i]/8+j]*/ = append(compressed, input[(i+1)*4+j])
+			}
+			need[i+1] += need[i]
+			have[i+1] -= need[i]
+			index := 0
+			for j := need[i] / 8; j < 4; j++ {
+				input[(i+1)*4+index] = input[(i+1)*4+j]
+				index++
+			}
+			for j := index; j < 4; j++ {
+				input[(i+1)*4+j] = byte(0)
+			}
+		} else if need[i] > have[i+1] && i != len(input)/4-2 {
+			aux1 := takeBitsDeHamming(have[i+1], input[(i+1)*4:(i+1)*4+5], position)
+			aux2 := takeBitsDeHamming(need[i]-have[i+1], input[(i+2)*4:(i+2)*4+5], (position+have[i+1])%8)
+			conflictByte1 := int(have[i] / 8)
+			for j := 0; j < conflictByte1; j++ {
+				compressed /*[i*4+j]*/ = append(compressed, input[i*4+j])
+			}
+			compressed /*[i*4+conflictByte1]*/ = append(compressed, input[i*4+conflictByte1]|aux1[0])
+			for j := conflictByte1 + 1; j < len(aux1)-1; j++ {
+				compressed /*[i*4+j]*/ = append(compressed, aux1[j])
+			}
+			conflictByte2 := int(have[i+1] / 8)
+			compressed /*[i*4+len(aux1)-1]*/ = append(compressed, aux1[conflictByte2]|aux2[0])
+			for j := 1; j < len(aux2); j++ {
+				compressed /*[i*4+len(aux1)+j]*/ = append(compressed, aux2[j])
+			}
+			aux := ajustBytes(input[(i+2)*4:(i+2)*4+5], need[i]-have[i+1])
+			for j := 0; j < len(aux); j++ {
+				input[(i+2)*4+j] = aux[j]
+			}
+			have[i+2] -= need[i] - have[i+1]
+			need[i+2] += need[i] - have[i+1]
+			i++
+			position = (position + 4) % 8
+		} else {
+			aux := takeBitsDeHamming(need[i], input[(i+1)*4:(i+1)*4+5], position)
+			conflictByte := int(have[i] / 8)
+			for j := 0; j < conflictByte; j++ {
+				compressed /*[i*4+j]*/ = append(compressed, input[i*4+j])
+			}
+			compressed /*[i*4+conflictByte]*/ = append(compressed, input[i*4+conflictByte]|aux[0])
+			for j := 1; j < len(aux); j++ {
+				compressed /*[i*4+j]*/ = append(compressed, aux[j])
+			}
+			need[i+1] += need[i]
+			have[i+1] -= need[i]
+			aux = ajustBytes(input[(i+1)*4:(i+1)*4+4+1], need[i])
+			for j := 0; j < len(aux); j++ {
+				input[(i+1)*4+j] = aux[j]
+			}
+			if need[i] == 26 {
+				i++
+				position = (position + 4) % 8
+			} else {
+				position += 2
+			}
+		}
+	}
+	for i := 0; i < 4; i++ {
+		compressed = append(compressed, input[len(input)-4+i])
+	}
+	return compressed[:]
+}
+
+func takeBitsDeHamming(bits int, input []byte, initialPosition int) []byte {
+	aux := input[len(input)-1]
+	input[len(input)-1] = byte(0)
+	bytesQuantity := int(math.Ceil(float64(bits+initialPosition) / float64(8)))
+	ret := make([]byte, bytesQuantity)
+	if initialPosition == 0 {
+		for i := 0; i < bytesQuantity; i++ {
+			ret[i] = input[i]
+		}
+		if bits%8 != 0 {
+			ret[bytesQuantity-1] &= doMask(bits % 8)
+		}
+	} else {
+		garbage := byte(0)
+		for i := 0; i < bytesQuantity; i++ {
+			ret[i] = garbage | ((doMask(8-initialPosition) & input[i]) >> byte(initialPosition))
+			garbage = ((doMask(initialPosition) >> byte(8-initialPosition)) & input[i]) << byte(8-initialPosition)
+		}
+		mask := (bits%8 + initialPosition) % 8
+		if mask == 0 {
+			mask = 8
+		}
+		ret[bytesQuantity-1] &= doMask(mask)
+	}
+	input[len(input)-1] = aux
+	return ret
+}
+
+func ajustBytes(input []byte, begin int) []byte {
+	position := begin % 8
+	numberOfByte := byteNumber(begin, 4)
+	bytesQuantity := 4
+	ret := make([]byte, bytesQuantity)
+	ret[0] = ((doMask(8-position) >> byte(position)) & input[numberOfByte]) << byte(position)
+	aux := takeBitsDeHamming((len(input)-numberOfByte-2)*8, input[numberOfByte+1:], 8-position)
+	ret[0] |= aux[0]
+	for i := 1; i < len(aux); i++ {
+		ret[i] = aux[i]
+	}
+	return ret
 }
