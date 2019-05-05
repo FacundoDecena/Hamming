@@ -47,6 +47,7 @@ func (tree *TreeNode) Insert(son1 *TreeNode, son2 *TreeNode) *TreeNode {
 }
 
 //Example of use:
+
 /*
 	var item1, item2, item3 Huffman.Item
 	item1.Symbol = 97

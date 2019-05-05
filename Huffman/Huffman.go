@@ -2,61 +2,57 @@ package Huffman
 
 import "container/heap"
 
+// Function huffman receives a priority queue and do a binary tree to make the huffman codification.
+
 func huffman(parva PriorityQueue) {
 
-	var listMin []int
+	var listMin []*TreeNode
+	var tree *TreeNode
+	// var code []int32
+
 	heap.Init(&parva)
 
 	// Print the order by Priority of expiry
 	for parva.Len() > 0 {
-		item := heap.Pop(&parva).(*Item)
-
-		listMin = append(listMin, item.Weight)
+		item := heap.Pop(&parva).(*TreeNode)
+		listMin = append(listMin, item)
 		if len(listMin) == 2 {
-			var newItem Item
-			newItem = giveNewMin(listMin[0], listMin[1])
-			// fmt.Printf("symbol: %c : Weight : %d \n", newItem.symbol, newItem.Weight)
-			parva.Push(&newItem)
-
+			tree = tree.Insert(listMin[0], listMin[1])
+			parva.Push(tree)
 			listMin = nil
 		}
-
-		// use the tree with the item and make the tree.
 
 	}
 
 }
 
-// This function take the map (table of frequencies) and make de list of items.
+// This function take the map (table of frequencies) and make de list of tree nodes.
 
-func toItems(table map[byte]int) (list []*Item) {
+func toItems(table map[byte]int) (list []*TreeNode) {
 
 	for key, value := range table {
-		var newNode Item
-		newNode.Symbol = key
-		newNode.Weight = value
+		var newItem Item
+		var newTreeNode *TreeNode
+		newItem.Symbol = key
+		newItem.Weight = value
+		newTreeNode, _ = newTreeNode.New(newItem)
 
-		list = append(list, &newNode)
+		list = append(list, newTreeNode)
 	}
 	return list
 
 }
 
 // This function make the parva with a priority queue with the list of items.
-func makeParva(listItems []*Item) PriorityQueue {
+
+func makeParva(listItems []*TreeNode) PriorityQueue {
 
 	priorityQueue := make(PriorityQueue, len(listItems))
 
 	for i, item := range listItems {
 		priorityQueue[i] = item
-		priorityQueue[i].Index = i
+		priorityQueue[i].Value.Index = i
 	}
 
 	return priorityQueue
-}
-
-func giveNewMin(min1 int, min2 int) (res Item) {
-	res.Symbol = uint8(230)
-	res.Weight = min1 + min2
-	return res
 }
