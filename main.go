@@ -25,9 +25,11 @@ func main() {
 		case 1:
 			Hamming()
 		case 2:
-			DeHamming()
+			DeHamming(true)
 		case 3:
 			IntroduceErrors()
+		case 4:
+			DeHamming(false)
 		case 5:
 			seeSize()
 		case 6:

@@ -65,6 +65,7 @@ func (tree *TreeNode) GenerateCodification(codification string, codifications []
 }
 
 //Example of use:
+
 /*
     var item1, item2, item3, item4, item5 Huffman.Item
 	var code []string
