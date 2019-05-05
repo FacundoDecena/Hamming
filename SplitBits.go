@@ -5,6 +5,7 @@ import (
 	"math"
 )
 
+// This function call to "takeBits" until the bits array is empty.
 func callTakeBits(hMBits int, body []byte) (Array [][]byte) {
 	var TrashBits int
 	var bytes []byte
@@ -20,6 +21,7 @@ func callTakeBits(hMBits int, body []byte) (Array [][]byte) {
 
 }
 
+// This function take the amount the bits you want for a bytes array. ( must be more than 7 )
 func takeBits(bits int, body []byte, NumberOfTrashBits int) ([]byte, []byte, int) {
 
 	var cantByte int
@@ -66,6 +68,7 @@ func takeBits(bits int, body []byte, NumberOfTrashBits int) ([]byte, []byte, int
 				bait = bait & mask     // make the byte
 
 				arr_bit[cantByte] = bait // put the byte on the array.
+
 			}
 			body = nil
 		} else {
@@ -74,6 +77,7 @@ func takeBits(bits int, body []byte, NumberOfTrashBits int) ([]byte, []byte, int
 				mask = doMask(cantBit)   // make the mask by how many bits i need
 				bait = bait & mask       // make the byte
 				arr_bit[cantByte] = bait // put the byte on the array.
+
 			}
 			NumberOfTrashBits += cantBit
 
@@ -94,18 +98,16 @@ func takeBits(bits int, body []byte, NumberOfTrashBits int) ([]byte, []byte, int
 	}
 }
 
-//TODO: Pongan que pinchila hace porque la use pensando que hacia algo distinto
-func doMask(bits int) uint8 { //TODO: should return uint8 and error, not print the error.
+// This function make a mask to take bits from a byte (left to right).
+func doMask(bits int) uint8 {
 	if bits > 8 {
-		fmt.Printf("ERROR: WRONG MASK \n")
-
+		return uint8(0)
 	} else if bits < 0 {
-		fmt.Printf("ERROR: WRONG MASK \n")
+		return uint8(0)
 	} else {
 		val_mask := math.Pow(2, float64(bits)) - 1
 		mask := uint8(val_mask) << uint(8-bits)
 		return mask
 	}
-	return uint8(0)
 
 }
