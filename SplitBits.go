@@ -1,10 +1,12 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"math"
 )
 
+// This function call to "takeBits" until the bits array is empty.
 func callTakeBits(hMBits int, body []byte) (Array [][]byte) {
 	var TrashBits int
 	var bytes []byte
@@ -20,17 +22,19 @@ func callTakeBits(hMBits int, body []byte) (Array [][]byte) {
 
 }
 
+// This function take the amount the bits you want for a bytes array. ( must be more than 7 )
 func takeBits(bits int, body []byte, NumberOfTrashBits int) ([]byte, []byte, int) {
 
 	var cantByte int
 	var cantBit int
 	var arr_bit []byte
 	var mask uint8
+	var err error
 	var bait byte
 	var finish bool
 	var bitsToMove int
 
-	// initialise variables //
+	// initialise variables
 
 	cantByte = bits / 8                // amount bytes i need.
 	bitsToMove = 8 - NumberOfTrashBits // how many bits i need to shift.
@@ -46,13 +50,13 @@ func takeBits(bits int, body []byte, NumberOfTrashBits int) ([]byte, []byte, int
 				body = append(body, uint8(0))
 			}
 
-			// adjust //
+			// adjust
 
 			bait_aux := body[index]
 			bait_aux = bait_aux << uint(NumberOfTrashBits) // shift to left how many bits i need to remove
 			nextBait := body[index+1]
 			nextBait = nextBait >> uint(bitsToMove)
-			aux := bait_aux | nextBait // merge the bytes to pass the bits from the next byte to thisone.
+			aux := bait_aux | nextBait // merge the bytes to pass the bits from the next byte to this one.
 
 			arr_bit = append(arr_bit, aux) // put it on the array.
 
@@ -62,18 +66,26 @@ func takeBits(bits int, body []byte, NumberOfTrashBits int) ([]byte, []byte, int
 			if cantBit > 0 {
 				bait = arr_bit[cantByte] // adjust the byte
 
-				mask = doMask(cantBit) // make the mask by how many bits i need
-				bait = bait & mask     // make the byte
+				mask, err = doMask(cantBit) // make the mask by how many bits i need
+				if err == nil {
+					bait = bait & mask // make the byte
 
-				arr_bit[cantByte] = bait // put the byte on the array.
+					arr_bit[cantByte] = bait // put the byte on the array.
+				} else {
+					fmt.Print(err)
+				}
 			}
 			body = nil
 		} else {
 			if cantBit > 0 {
-				bait = arr_bit[cantByte] // adjust the byte
-				mask = doMask(cantBit)   // make the mask by how many bits i need
-				bait = bait & mask       // make the byte
-				arr_bit[cantByte] = bait // put the byte on the array.
+				bait = arr_bit[cantByte]    // adjust the byte
+				mask, err = doMask(cantBit) // make the mask by how many bits i need
+				if err == nil {
+					bait = bait & mask       // make the byte
+					arr_bit[cantByte] = bait // put the byte on the array.
+				} else {
+					fmt.Print(err)
+				}
 			}
 			NumberOfTrashBits += cantBit
 
@@ -94,17 +106,16 @@ func takeBits(bits int, body []byte, NumberOfTrashBits int) ([]byte, []byte, int
 	}
 }
 
-func doMask(bits int) uint8 {
-	if bits > 8 {
-		fmt.Printf("ERROR: WRONG MASK \n")
-
+// This function make a mask to take bits from a byte (left to right).
+func doMask(bits int) (uint8, error) {
+	if bits < 8 {
+		return uint8(0), errors.New("bits must be more than 7")
 	} else if bits < 0 {
-		fmt.Printf("ERROR: WRONG MASK \n")
+		return uint8(0), errors.New("bits must be positive")
 	} else {
 		val_mask := math.Pow(2, float64(bits)) - 1
 		mask := uint8(val_mask) << uint(8-bits)
-		return mask
+		return mask, nil
 	}
-	return uint8(0)
 
 }

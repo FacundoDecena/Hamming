@@ -1,8 +1,8 @@
 package Huffman
 
 type Item struct {
-	symbol byte
-	weight int
+	Symbol byte
+	Weight int
 
 	Index int // The index of the item in the heap.
 }
@@ -14,7 +14,7 @@ func (pq PriorityQueue) Len() int { return len(pq) }
 func (pq PriorityQueue) Less(i, j int) bool {
 	// We want Pop to give us the lowest based on expiration number as the priority
 	// The lower the expiry, the higher the priority
-	return pq[i].weight < pq[j].weight
+	return pq[i].Weight < pq[j].Weight
 }
 
 // We just implement the pre-defined function in interface of heap.
