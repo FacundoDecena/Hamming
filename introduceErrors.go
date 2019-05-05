@@ -32,8 +32,6 @@ func IntroduceErrors() {
 	switch extension[1] {
 	case "ha1":
 		fileWithErrors = insertError7(body)
-		fmt.Println("Se han introducido errores de manera correcta.")
-		_, _ = fmt.Fscanf(r, "%s")
 	case "ha2":
 		fileWithErrors = insertError(body, 32)
 	case "ha3":
@@ -42,6 +40,8 @@ func IntroduceErrors() {
 		fileWithErrors = insertError(body, 32768)
 	}
 
+	fmt.Println("Se han introducido errores de manera correcta.")
+	_, _ = fmt.Fscanf(r, "%s")
 	_ = saveFile(fileName, fileWithErrors)
 }
 
@@ -129,7 +129,6 @@ func insertError(file []byte, kind int) (ret []byte) {
 	blocks = takeBlocks(file, kind)
 	for i := 0; i < len(blocks); i++ {
 		erroredBlock = randomErrors(blocks[i], kind)
-		fmt.Println(erroredBlock)
 		for j := 0; j < (kind / 8); j++ {
 			ret = append(ret, erroredBlock[j])
 		}
@@ -172,7 +171,7 @@ func randomErrors(input []byte, kind int) (ret []byte) {
 		targetedByte := rand.Intn(blockSize - 1)
 		bait := input[targetedByte]
 		//Select random position
-		position := byte(rand.Intn(8))
+		position := byte(rand.Intn(7))
 		//Creates a mask
 		mask := exp(position)
 		//Get the targeted bit
