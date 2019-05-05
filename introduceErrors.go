@@ -171,7 +171,7 @@ func randomErrors(input []byte, kind int) (ret []byte) {
 		targetedByte := rand.Intn(blockSize - 1)
 		bait := input[targetedByte]
 		//Select random position
-		position := byte(rand.Intn(8))
+		position := byte(rand.Intn(7))
 		//Creates a mask
 		mask := exp(position)
 		//Get the targeted bit
