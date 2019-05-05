@@ -111,6 +111,7 @@ func preDeHamming(size int) {
 	log.Printf("\nDeHamming took %s", elapsed)
 	_, _ = fmt.Scanf("%s")
 }
+
 func deHamming7(file []byte) (ret []byte) {
 	var encoded1stByte, encoded2ndByte, bitsToSpare, decoded1stByte, decoded2ndByte, decodedByte byte
 	bitsToSpare = 0
@@ -200,6 +201,13 @@ func decode7(bait byte) (s byte) {
 	return s
 }
 
+//correct Corrects the bit containing the error.
+//
+// bait: The hamming block for hamming 7. Extra 0 is assume to be at the right.
+//
+// syndrome : Position (left to right) where the mistake is.
+//
+// returns the block without the error.
 func correct(bait byte, syndrome byte) (corrected byte) {
 	//Get the wrong bit
 	mistake := bait & exp(7-syndrome)

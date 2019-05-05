@@ -22,7 +22,9 @@ func (treeNode *TreeNode) New(node Item) (*TreeNode, error) {
 }
 
 //insert Inserts two treeNodes to the tree.
+//
 //Returns a new treeNode with symbol = 0, the sum of the weights.
+//
 //Points to the sons, on the left the lightest
 func (tree *TreeNode) Insert(son1 *TreeNode, son2 *TreeNode) *TreeNode {
 	var root *TreeNode

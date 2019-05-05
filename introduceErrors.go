@@ -191,7 +191,13 @@ func randomErrors(input []byte, kind int) (ret []byte) {
 	return input
 }
 
-//takeBlocks return an array with hamming blocks with size kind
+//takeBlocks returns separated hamming blocks
+//
+//input is the file
+//
+//kind is the type of hamming (32, 1024, 32768)
+//
+//return an array with hamming blocks with size kind
 func takeBlocks(input []byte, kind int) (ret [][]byte) {
 	var length, blockSize int
 	length = len(input)
