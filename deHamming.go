@@ -83,7 +83,7 @@ func preDeHamming(size int) {
 	switch size {
 	case 32:
 		format = "2"
-	case 1028:
+	case 1024:
 		format = "3"
 	case 32768:
 		format = "4"
@@ -252,7 +252,15 @@ func callDecode(size int, input []byte) []byte {
 		sl += blockSize
 	}
 	//Finally compress
-	return compress(decodedFile)
+	switch size {
+	case 32:
+		return compress32(decodedFile)
+	case 1024:
+		return compress1024(decodedFile)
+	case 32768:
+		return decodedFile
+	}
+	return nil
 }
 
 //Take the data bits from the hamming block of 32,1024 and 32768 bits
@@ -281,6 +289,9 @@ func decode(size int, input []byte, controlBitsQuantity int) []byte {
 			}
 		}
 	}
+	if size == 1024 {
+		decoded = append(decoded, 0)
+	}
 	return decoded
 }
 
@@ -291,7 +302,7 @@ func byteNumberDeHamming(position int) (int, int) {
 	return place, byteNumber
 }
 
-func compress(input []byte) []byte {
+func compress32(input []byte) []byte {
 	have := make([]int, len(input)/4)
 	need := make([]int, len(input)/4)
 	input = append(input, 0)
@@ -336,7 +347,7 @@ func compress(input []byte) []byte {
 			for j := 1; j < len(aux2); j++ {
 				compressed = append(compressed, aux2[j])
 			}
-			aux := ajustBytes(input[(i+2)*4:(i+2)*4+5], need[i]-have[i+1])
+			aux := ajustBytes(32, input[(i+2)*4:(i+2)*4+5], need[i]-have[i+1])
 			for j := 0; j < len(aux); j++ {
 				input[(i+2)*4+j] = aux[j]
 			}
@@ -356,7 +367,7 @@ func compress(input []byte) []byte {
 			}
 			need[i+1] += need[i]
 			have[i+1] -= need[i]
-			aux = ajustBytes(input[(i+1)*4:(i+1)*4+4+1], need[i])
+			aux = ajustBytes(32, input[(i+1)*4:(i+1)*4+4+1], need[i])
 			for j := 0; j < len(aux); j++ {
 				input[(i+1)*4+j] = aux[j]
 			}
@@ -370,6 +381,90 @@ func compress(input []byte) []byte {
 	}
 	for i := 0; i < 4; i++ {
 		compressed = append(compressed, input[len(input)-5+i])
+	}
+	return compressed[:]
+}
+
+func compress1024(input []byte) []byte {
+	bytesBlock := 1024 / 8
+	have := make([]int, (len(input)+1)/bytesBlock)
+	need := make([]int, (len(input)+1)/bytesBlock)
+	input = append(input, 0)
+	var compressed []byte
+	for i := 0; i < len(have); i++ {
+		have[i] = 1013
+		need[i] = 11
+	}
+	position := 5
+	for i := 0; i < (len(input)-1)/bytesBlock-1; i++ {
+		if need[i]%8 == 0 {
+			position = 5
+			for j := 0; j < have[i]/8; j++ {
+				compressed = append(compressed, input[i*bytesBlock+j])
+			}
+			for j := 0; j < need[i]/8; j++ {
+				compressed = append(compressed, input[(i+1)*bytesBlock+j])
+			}
+			need[i+1] += need[i]
+			have[i+1] -= need[i]
+			index := 0
+			for j := need[i] / 8; j < bytesBlock; j++ {
+				input[(i+1)*bytesBlock+index] = input[(i+1)*bytesBlock+j]
+				index++
+			}
+			for j := index; j < bytesBlock; j++ {
+				input[(i+1)*bytesBlock+j] = byte(0)
+			}
+		} else if need[i] > have[i+1] && i != (len(input)-1)/bytesBlock-2 {
+			aux1 := takeBitsDeHamming(have[i+1], input[(i+1)*bytesBlock:(i+1)*bytesBlock+bytesBlock+1], position)
+			aux2 := takeBitsDeHamming(need[i]-have[i+1], input[(i+2)*bytesBlock:(i+2)*bytesBlock+bytesBlock+1], (position+have[i+1])%8)
+			conflictByte1 := int(have[i] / 8)
+			for j := 0; j < conflictByte1; j++ {
+				compressed = append(compressed, input[i*bytesBlock+j])
+			}
+			compressed = append(compressed, input[i*bytesBlock+conflictByte1]|aux1[0])
+			for j := conflictByte1 + 1; j < len(aux1)-1; j++ {
+				compressed = append(compressed, aux1[j])
+			}
+			conflictByte2 := int(have[i+1] / 8)
+			compressed = append(compressed, aux1[conflictByte2]|aux2[0])
+			for j := 1; j < len(aux2); j++ {
+				compressed = append(compressed, aux2[j])
+			}
+			aux := ajustBytes(1024, input[(i+2)*bytesBlock:(i+2)*bytesBlock+bytesBlock+1], need[i]-have[i+1])
+			for j := 0; j < len(aux); j++ {
+				input[(i+2)*bytesBlock+j] = aux[j]
+			}
+			have[i+2] -= need[i] - have[i+1]
+			need[i+2] += need[i] - have[i+1]
+			i++
+			position = (position + 2) % 8
+		} else {
+			aux := takeBitsDeHamming(need[i], input[(i+1)*bytesBlock:(i+1)*bytesBlock+bytesBlock+1], position)
+			conflictByte := int(have[i] / 8)
+			for j := 0; j < conflictByte; j++ {
+				compressed = append(compressed, input[i*bytesBlock+j])
+			}
+			compressed = append(compressed, input[i*bytesBlock+conflictByte]|aux[0])
+			for j := 1; j < len(aux); j++ {
+				compressed = append(compressed, aux[j])
+			}
+			need[i+1] += need[i]
+			have[i+1] -= need[i]
+			aux = ajustBytes(1024, input[(i+1)*bytesBlock:(i+1)*bytesBlock+bytesBlock+1], need[i])
+			for j := 0; j < len(aux); j++ {
+				input[(i+1)*bytesBlock+j] = aux[j]
+			}
+			if need[i] == 1013 {
+				i++
+				position = (position + 2) % 8
+			} else {
+				position = (position + 5) % 8
+			}
+		}
+	}
+	for i := 0; i < bytesBlock; i++ {
+		compressed = append(compressed, input[len(input)-(bytesBlock+1)+i])
 	}
 	return compressed[:]
 }
@@ -402,10 +497,10 @@ func takeBitsDeHamming(bits int, input []byte, initialPosition int) []byte {
 	return ret
 }
 
-func ajustBytes(input []byte, begin int) []byte {
+func ajustBytes(size int, input []byte, begin int) []byte {
 	position := begin % 8
-	numberOfByte := byteNumber(begin, 4)
-	bytesQuantity := 4
+	bytesQuantity := size / 8
+	numberOfByte := byteNumber(begin, bytesQuantity)
 	ret := make([]byte, bytesQuantity)
 	ret[0] = ((doMask(8-position) >> byte(position)) & input[numberOfByte]) << byte(position)
 	aux := takeBitsDeHamming((len(input)-numberOfByte-2)*8, input[numberOfByte+1:], 8-position)
