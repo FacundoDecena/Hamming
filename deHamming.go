@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"strings"
 	"time"
@@ -27,6 +28,12 @@ func DeHamming() {
 		switch dhOp {
 		case 1:
 			preDeHamming7()
+		case 2:
+			preDeHamming(32)
+		case 3:
+			preDeHamming(1024)
+		case 4:
+			preDeHamming(32768)
 		case 5:
 			dhContinue_ = false
 		}
@@ -65,10 +72,50 @@ func preDeHamming7() {
 	_, _ = fmt.Scanf("%s")
 }
 
+func preDeHamming(size int) {
+	var fileName string
+	var body []byte
+	var err error
+	var start time.Time
+	r := bufio.NewReader(os.Stdin)
+	clearScreen()
+	var format string
+	switch size {
+	case 32:
+		format = "2"
+	case 1028:
+		format = "3"
+	case 32768:
+		format = "4"
+
+	}
+	fmt.Println("Ingrese el nombre del archivo .ha" + format)
+	_, _ = fmt.Fscanf(r, "%s", &fileName)
+
+	fileName += ".ha" + format
+
+	body, err = loadFile(fileName)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	start = time.Now()
+	decodedFile := callDecode(size, body)
+	fileName = strings.Replace(fileName, ".ha"+format, ".deh", -1)
+	err = saveFile(fileName, decodedFile)
+	if err != nil {
+		fmt.Println(err)
+	}
+	elapsed := time.Since(start)
+	log.Printf("\nDeHamming took %s", elapsed)
+	_, _ = fmt.Scanf("%s")
+}
+
 func deHamming7(file []byte) (ret []byte) {
 	var encoded1stByte, encoded2ndByte, bitsToSpare, decoded1stByte, decoded2ndByte, decodedByte byte
 	bitsToSpare = 0
-	two55 := byte(exp(8)) - 1 // 255
+	two55 := exp(8) - 1 // 255
 	var j byte
 	j = 0
 	for i := 0; i < len(file); i += 2 {
@@ -83,7 +130,7 @@ func deHamming7(file []byte) (ret []byte) {
 		//Append decoded half to decodedByte
 		decoded1stByte = decode7(encoded1stByte) << 4
 		//Save bits that does not belong to the hamming block
-		bitsToSpare = file[i] & (byte(exp(j+1)) - 1)
+		bitsToSpare = file[i] & (exp(j+1) - 1)
 		j++
 		if j%7 == 0 && i > 0 {
 			i--
@@ -102,7 +149,7 @@ func deHamming7(file []byte) (ret []byte) {
 			encoded2ndByte = bitsToSpare | encoded2ndByte
 			encoded2ndByte >>= 1
 			//Save bits that does not belong to the hamming block for the next iteration
-			bitsToSpare = file[i+1] & (byte(exp(j+1)) - 1)
+			bitsToSpare = file[i+1] & (exp(j+1) - 1)
 			//Append 2nd decoded half to decodedByte
 			decoded2ndByte = decode7(encoded2ndByte)
 			decodedByte = decoded1stByte | decoded2ndByte
@@ -154,28 +201,243 @@ func decode7(bait byte) (s byte) {
 	return s
 }
 
+//correct Corrects the bit containing the error.
+//
+// bait: The hamming block for hamming 7. Extra 0 is assume to be at the right.
+//
+// syndrome : Position (left to right) where the mistake is.
+//
+// returns the block without the error.
 func correct(bait byte, syndrome byte) (corrected byte) {
 	//Get the wrong bit
-	mistake := bait & byte(exp(7-syndrome))
+	mistake := bait & exp(7-syndrome)
 	//If it is 0, the only way to know its position is using the same power of 2
 	if mistake == 0 {
-		mistake = byte(exp(7 - syndrome))
+		mistake = exp(7 - syndrome)
 	} else { //If the bit is 1 it has to be 0
 		mistake = 0
 	}
 	//wom comes from Without Mistake, which is bait with 0 in the position of the mistake
-	wom := bait & (255 - byte(exp(7-syndrome)))
+	wom := bait & (255 - exp(7-syndrome))
 
 	corrected = wom | mistake
 
 	return corrected
 }
 
-func exp(exponent byte) (ret int) {
+func exp(exponent byte) (ret byte) {
 	ret = 1
 	var i byte
 	for i = 0; i < exponent; i++ {
 		ret *= 2
 	}
 	return ret
+}
+
+func callDecode(size int, input []byte) []byte {
+	var decodedFile []byte
+	_, _, controlBitsQuantity := initialCase(size)
+	blockSize := size / 8
+	il := 0
+	sl := blockSize
+	for i := 0; i < len(input); i += blockSize {
+		checkError(size, input[il:sl], controlBitsQuantity)
+		aux := decode(size, input[il:sl], controlBitsQuantity)
+		for j := 0; j < len(aux); j++ {
+			decodedFile = append(decodedFile, aux[j])
+		}
+		il += blockSize
+		sl += blockSize
+	}
+
+	return compress(decodedFile)
+}
+
+func decode(size int, input []byte, controlBitsQuantity int) []byte {
+	decoded := make([]byte, int(math.Ceil((float64(size)-float64(controlBitsQuantity))/8)))
+	decodedPosition := 0
+	decodedNumberOfByte := 0
+	for i := 0; i < controlBitsQuantity-1; i++ {
+		il := expInt(i) - 1
+		sl := expInt(i+1) - 1
+		for j := il + 1; j < sl; j++ {
+			position, numberOfByte := byteNumberDeHamming(j)
+			dataBit := takeBit(input[numberOfByte], 7-position, 7-decodedPosition)
+			decoded[decodedNumberOfByte] = decoded[decodedNumberOfByte] | dataBit
+			decodedPosition++
+			if decodedPosition > 7 {
+				decodedPosition = 0
+				decodedNumberOfByte++
+			}
+		}
+	}
+	return decoded
+}
+
+func byteNumberDeHamming(position int) (int, int) {
+	place := position % 8
+	byteNumber := position / 8
+	return place, byteNumber
+}
+
+func compress(input []byte) []byte {
+	have := make([]int, len(input)/4)
+	need := make([]int, len(input)/4)
+	var compressed []byte //:= make([]byte, int(math.Ceil(float64(len(input))*3.25/float64(4))))
+	for i := 0; i < len(input)/4-1; i++ {
+		have[i] = 26
+		need[i] = 6
+	}
+	position := 2
+	for i := 0; i < len(input)/4-1; i++ {
+		if need[i]%8 == 0 {
+			position = 2
+			for j := 0; j < have[i]/8; j++ {
+				compressed = append(compressed, input[i*4+j])
+			}
+			for j := 0; j < need[i]/8; j++ {
+				compressed /*[i*4+have[i]/8+j]*/ = append(compressed, input[(i+1)*4+j])
+			}
+			need[i+1] += need[i]
+			have[i+1] -= need[i]
+			index := 0
+			for j := need[i] / 8; j < 4; j++ {
+				input[(i+1)*4+index] = input[(i+1)*4+j]
+				index++
+			}
+			for j := index; j < 4; j++ {
+				input[(i+1)*4+j] = byte(0)
+			}
+		} else if need[i] > have[i+1] && i != len(input)/4-2 {
+			aux1 := takeBitsDeHamming(have[i+1], input[(i+1)*4:(i+1)*4+5], position)
+			aux2 := takeBitsDeHamming(need[i]-have[i+1], input[(i+2)*4:(i+2)*4+5], (position+have[i+1])%8)
+			conflictByte1 := int(have[i] / 8)
+			for j := 0; j < conflictByte1; j++ {
+				compressed /*[i*4+j]*/ = append(compressed, input[i*4+j])
+			}
+			compressed /*[i*4+conflictByte1]*/ = append(compressed, input[i*4+conflictByte1]|aux1[0])
+			for j := conflictByte1 + 1; j < len(aux1)-1; j++ {
+				compressed /*[i*4+j]*/ = append(compressed, aux1[j])
+			}
+			conflictByte2 := int(have[i+1] / 8)
+			compressed /*[i*4+len(aux1)-1]*/ = append(compressed, aux1[conflictByte2]|aux2[0])
+			for j := 1; j < len(aux2); j++ {
+				compressed /*[i*4+len(aux1)+j]*/ = append(compressed, aux2[j])
+			}
+			aux := ajustBytes(input[(i+2)*4:(i+2)*4+5], need[i]-have[i+1])
+			for j := 0; j < len(aux); j++ {
+				input[(i+2)*4+j] = aux[j]
+			}
+			have[i+2] -= need[i] - have[i+1]
+			need[i+2] += need[i] - have[i+1]
+			i++
+			position = (position + 4) % 8
+		} else {
+			aux := takeBitsDeHamming(need[i], input[(i+1)*4:(i+1)*4+5], position)
+			conflictByte := int(have[i] / 8)
+			for j := 0; j < conflictByte; j++ {
+				compressed /*[i*4+j]*/ = append(compressed, input[i*4+j])
+			}
+			compressed /*[i*4+conflictByte]*/ = append(compressed, input[i*4+conflictByte]|aux[0])
+			for j := 1; j < len(aux); j++ {
+				compressed /*[i*4+j]*/ = append(compressed, aux[j])
+			}
+			need[i+1] += need[i]
+			have[i+1] -= need[i]
+			aux = ajustBytes(input[(i+1)*4:(i+1)*4+4+1], need[i])
+			for j := 0; j < len(aux); j++ {
+				input[(i+1)*4+j] = aux[j]
+			}
+			if need[i] == 26 {
+				i++
+				position = (position + 4) % 8
+			} else {
+				position += 2
+			}
+		}
+	}
+	for i := 0; i < 4; i++ {
+		compressed = append(compressed, input[len(input)-4+i])
+	}
+	return compressed[:]
+}
+
+func takeBitsDeHamming(bits int, input []byte, initialPosition int) []byte {
+	aux := input[len(input)-1]
+	input[len(input)-1] = byte(0)
+	bytesQuantity := int(math.Ceil(float64(bits+initialPosition) / float64(8)))
+	ret := make([]byte, bytesQuantity)
+	if initialPosition == 0 {
+		for i := 0; i < bytesQuantity; i++ {
+			ret[i] = input[i]
+		}
+		if bits%8 != 0 {
+			ret[bytesQuantity-1] &= doMask(bits % 8)
+		}
+	} else {
+		garbage := byte(0)
+		for i := 0; i < bytesQuantity; i++ {
+			ret[i] = garbage | ((doMask(8-initialPosition) & input[i]) >> byte(initialPosition))
+			garbage = ((doMask(initialPosition) >> byte(8-initialPosition)) & input[i]) << byte(8-initialPosition)
+		}
+		mask := (bits%8 + initialPosition) % 8
+		if mask == 0 {
+			mask = 8
+		}
+		ret[bytesQuantity-1] &= doMask(mask)
+	}
+	input[len(input)-1] = aux
+	return ret
+}
+
+func ajustBytes(input []byte, begin int) []byte {
+	position := begin % 8
+	numberOfByte := byteNumber(begin, 4)
+	bytesQuantity := 4
+	ret := make([]byte, bytesQuantity)
+	ret[0] = ((doMask(8-position) >> byte(position)) & input[numberOfByte]) << byte(position)
+	aux := takeBitsDeHamming((len(input)-numberOfByte-2)*8, input[numberOfByte+1:], 8-position)
+	ret[0] |= aux[0]
+	for i := 1; i < len(aux); i++ {
+		ret[i] = aux[i]
+	}
+	return ret
+}
+
+func checkError(size int, input []byte, controlBitsQuantity int) {
+	syndrome := make([]byte, controlBitsQuantity)
+	//Control bits calculus process
+	for i := 0; i < controlBitsQuantity; i++ {
+		parity := byte(0)
+		for j := expInt(i) - 1; j < size; j += expInt(i + 1) {
+			for k := 0; k < expInt(i); k++ {
+				parity ^= takeBit(input[byteNumber(j+int(k), size/8)], 7-(int((j+k)%8)), 0)
+			}
+		}
+		syndrome[i] = parity
+	}
+	correct := true
+	for i := 0; i < len(syndrome); i++ {
+		if syndrome[i] == 1 {
+			correct = false
+			break
+		}
+	}
+	if !correct {
+		errorPosition := 0
+		for i := len(syndrome) - 1; i >= 0; i-- {
+			errorPosition += expInt(i) * int(syndrome[i])
+		}
+		numberOfByte := byteNumber(errorPosition-1, size/4)
+		position := (errorPosition - 1) % 8
+		mistake := input[numberOfByte] & exp(byte(7-position))
+		if mistake == 0 {
+			mistake = exp(byte(7 - position))
+		} else {
+			mistake = 0
+		}
+		//wom comes from Without Mistake, which is bait with 0 in the position of the mistake
+		wom := input[numberOfByte] & (255 - exp(byte(7-position)))
+		input[numberOfByte] = wom | mistake
+	}
 }

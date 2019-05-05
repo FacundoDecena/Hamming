@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"math"
 )
@@ -29,7 +28,6 @@ func takeBits(bits int, body []byte, NumberOfTrashBits int) ([]byte, []byte, int
 	var cantBit int
 	var arr_bit []byte
 	var mask uint8
-	var err error
 	var bait byte
 	var finish bool
 	var bitsToMove int
@@ -66,26 +64,20 @@ func takeBits(bits int, body []byte, NumberOfTrashBits int) ([]byte, []byte, int
 			if cantBit > 0 {
 				bait = arr_bit[cantByte] // adjust the byte
 
-				mask, err = doMask(cantBit) // make the mask by how many bits i need
-				if err == nil {
-					bait = bait & mask // make the byte
+				mask = doMask(cantBit) // make the mask by how many bits i need
+				bait = bait & mask     // make the byte
 
-					arr_bit[cantByte] = bait // put the byte on the array.
-				} else {
-					fmt.Print(err)
-				}
+				arr_bit[cantByte] = bait // put the byte on the array.
+
 			}
 			body = nil
 		} else {
 			if cantBit > 0 {
-				bait = arr_bit[cantByte]    // adjust the byte
-				mask, err = doMask(cantBit) // make the mask by how many bits i need
-				if err == nil {
-					bait = bait & mask       // make the byte
-					arr_bit[cantByte] = bait // put the byte on the array.
-				} else {
-					fmt.Print(err)
-				}
+				bait = arr_bit[cantByte] // adjust the byte
+				mask = doMask(cantBit)   // make the mask by how many bits i need
+				bait = bait & mask       // make the byte
+				arr_bit[cantByte] = bait // put the byte on the array.
+
 			}
 			NumberOfTrashBits += cantBit
 
@@ -107,15 +99,15 @@ func takeBits(bits int, body []byte, NumberOfTrashBits int) ([]byte, []byte, int
 }
 
 // This function make a mask to take bits from a byte (left to right).
-func doMask(bits int) (uint8, error) {
-	if bits < 8 {
-		return uint8(0), errors.New("bits must be more than 7")
+func doMask(bits int) uint8 {
+	if bits > 8 {
+		return uint8(0)
 	} else if bits < 0 {
-		return uint8(0), errors.New("bits must be positive")
+		return uint8(0)
 	} else {
 		val_mask := math.Pow(2, float64(bits)) - 1
 		mask := uint8(val_mask) << uint(8-bits)
-		return mask, nil
+		return mask
 	}
 
 }
