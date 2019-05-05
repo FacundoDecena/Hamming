@@ -6,6 +6,6 @@
  does not show the corresponding message.
 * Not implemented the option of apply deHamming without correcting errors.
 
-#### Corrected
+#### Resolved
 
 * ~~introduceErrors accepts any extension (Currently erase the content).~~
