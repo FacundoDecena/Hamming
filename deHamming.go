@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func DeHamming() {
+func DeHamming(fixErrors bool) {
 	var dhOp int
 	r := bufio.NewReader(os.Stdin)
 	dhContinue_ := true
@@ -27,13 +27,13 @@ func DeHamming() {
 		_, _ = fmt.Fscanf(r, "%d", &dhOp)
 		switch dhOp {
 		case 1:
-			preDeHamming7()
+			preDeHamming7(fixErrors)
 		case 2:
-			preDeHamming(32)
+			preDeHamming(32, fixErrors)
 		case 3:
-			preDeHamming(1024)
+			preDeHamming(1024, fixErrors)
 		case 4:
-			preDeHamming(32768)
+			preDeHamming(32768, fixErrors)
 		case 5:
 			dhContinue_ = false
 		}
@@ -41,7 +41,7 @@ func DeHamming() {
 	}
 }
 
-func preDeHamming7() {
+func preDeHamming7(fixErrors bool) {
 	var fileName string
 	var body []byte
 	var err error
@@ -61,7 +61,7 @@ func preDeHamming7() {
 		return
 	}
 	start = time.Now()
-	decodedFile := deHamming7(body)
+	decodedFile := deHamming7(body, fixErrors)
 	fileName = strings.Replace(fileName, ".ha1", ".deh", -1)
 	err = saveFile(fileName, decodedFile)
 	if err != nil {
@@ -72,7 +72,7 @@ func preDeHamming7() {
 	_, _ = fmt.Scanf("%s")
 }
 
-func preDeHamming(size int) {
+func preDeHamming(size int, fixErrors bool) {
 	var fileName string
 	var body []byte
 	var err error
@@ -101,7 +101,7 @@ func preDeHamming(size int) {
 		return
 	}
 	start = time.Now()
-	decodedFile := callDecode(size, body)
+	decodedFile := callDecode(size, body, fixErrors)
 	fileName = strings.Replace(fileName, ".ha"+format, ".deh", -1)
 	err = saveFile(fileName, decodedFile)
 	if err != nil {
@@ -112,7 +112,7 @@ func preDeHamming(size int) {
 	_, _ = fmt.Scanf("%s")
 }
 
-func deHamming7(file []byte) (ret []byte) {
+func deHamming7(file []byte, fixErrors bool) (ret []byte) {
 	var encoded1stByte, encoded2ndByte, bitsToSpare, decoded1stByte, decoded2ndByte, decodedByte byte
 	bitsToSpare = 0
 	two55 := exp(8) - 1 // 255
@@ -128,7 +128,7 @@ func deHamming7(file []byte) (ret []byte) {
 		//Move the leftover bit to the left
 		encoded1stByte >>= 1
 		//Append decoded half to decodedByte
-		decoded1stByte = decode7(encoded1stByte) << 4
+		decoded1stByte = decode7(encoded1stByte, fixErrors) << 4
 		//Save bits that does not belong to the hamming block
 		bitsToSpare = file[i] & (exp(j+1) - 1)
 		j++
@@ -151,7 +151,7 @@ func deHamming7(file []byte) (ret []byte) {
 			//Save bits that does not belong to the hamming block for the next iteration
 			bitsToSpare = file[i+1] & (exp(j+1) - 1)
 			//Append 2nd decoded half to decodedByte
-			decoded2ndByte = decode7(encoded2ndByte)
+			decoded2ndByte = decode7(encoded2ndByte, fixErrors)
 			decodedByte = decoded1stByte | decoded2ndByte
 		}
 		//Append decodedByte to ret
@@ -166,7 +166,7 @@ func deHamming7(file []byte) (ret []byte) {
 	return ret
 }
 
-func decode7(bait byte) (s byte) {
+func decode7(bait byte, fixErrors bool) (s byte) {
 	c1 := (bait & uint8(64)) >> 6
 	c2 := (bait & uint8(32)) >> 5
 	d1 := (bait & uint8(16)) >> 4
@@ -174,17 +174,19 @@ func decode7(bait byte) (s byte) {
 	d2 := (bait & uint8(4)) >> 2
 	d3 := (bait & uint8(2)) >> 1
 	d4 := (bait & uint8(1)) >> 0
-	//Calculate sindrome using xor
-	var s1, s2, s3 byte
+	if fixErrors {
+		//Calculate sindrome using xor
+		var s1, s2, s3 byte
 
-	s1 = (c1 ^ d1 ^ d2 ^ d4) << 0
-	s2 = (c2 ^ d1 ^ d3 ^ d4) << 1
-	s3 = (c3 ^ d2 ^ d3 ^ d4) << 2
+		s1 = (c1 ^ d1 ^ d2 ^ d4) << 0
+		s2 = (c2 ^ d1 ^ d3 ^ d4) << 1
+		s3 = (c3 ^ d2 ^ d3 ^ d4) << 2
 
-	s = s1 | s2 | s3
+		s = s1 | s2 | s3
 
-	if s != 0 {
-		bait = correct(bait, s)
+		if s != 0 {
+			bait = correct(bait, s)
+		}
 	}
 
 	d1 = (bait & uint8(16)) >> 4
@@ -235,7 +237,7 @@ func exp(exponent byte) (ret byte) {
 }
 
 //Check errors, invoke to the function decode for decoding all the input file and finally compress the result when it's necessary (32 and  1024 bits)
-func callDecode(size int, input []byte) []byte {
+func callDecode(size int, input []byte, fixErrors bool) []byte {
 	var decodedFile []byte
 	_, _, controlBitsQuantity := initialCase(size)
 	blockSize := size / 8
@@ -243,7 +245,9 @@ func callDecode(size int, input []byte) []byte {
 	sl := blockSize
 	//For every block of 32, 1024 or 32768 bits check errors and then decode it
 	for i := 0; i < len(input); i += blockSize {
-		checkError(size, input[il:sl], controlBitsQuantity)
+		if fixErrors {
+			checkError(size, input[il:sl], controlBitsQuantity)
+		}
 		aux := decode(size, input[il:sl], controlBitsQuantity)
 		for j := 0; j < len(aux); j++ {
 			decodedFile = append(decodedFile, aux[j])
