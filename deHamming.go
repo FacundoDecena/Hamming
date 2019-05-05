@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func DeHamming() {
+func DeHamming(fixErrors bool) {
 	var dhOp int
 	r := bufio.NewReader(os.Stdin)
 	dhContinue_ := true
@@ -27,13 +27,13 @@ func DeHamming() {
 		_, _ = fmt.Fscanf(r, "%d", &dhOp)
 		switch dhOp {
 		case 1:
-			preDeHamming7()
+			preDeHamming7(fixErrors)
 		case 2:
-			preDeHamming(32)
+			preDeHamming(32, fixErrors)
 		case 3:
-			preDeHamming(1024)
+			preDeHamming(1024, fixErrors)
 		case 4:
-			preDeHamming(32768)
+			preDeHamming(32768, fixErrors)
 		case 5:
 			dhContinue_ = false
 		}
@@ -41,7 +41,7 @@ func DeHamming() {
 	}
 }
 
-func preDeHamming7() {
+func preDeHamming7(fixErrors bool) {
 	var fileName string
 	var body []byte
 	var err error
@@ -61,7 +61,7 @@ func preDeHamming7() {
 		return
 	}
 	start = time.Now()
-	decodedFile := deHamming7(body)
+	decodedFile := deHamming7(body, fixErrors)
 	fileName = strings.Replace(fileName, ".ha1", ".deh", -1)
 	err = saveFile(fileName, decodedFile)
 	if err != nil {
@@ -72,7 +72,7 @@ func preDeHamming7() {
 	_, _ = fmt.Scanf("%s")
 }
 
-func preDeHamming(size int) {
+func preDeHamming(size int, fixErrors bool) {
 	var fileName string
 	var body []byte
 	var err error
@@ -83,7 +83,7 @@ func preDeHamming(size int) {
 	switch size {
 	case 32:
 		format = "2"
-	case 1028:
+	case 1024:
 		format = "3"
 	case 32768:
 		format = "4"
@@ -101,7 +101,7 @@ func preDeHamming(size int) {
 		return
 	}
 	start = time.Now()
-	decodedFile := callDecode(size, body)
+	decodedFile := callDecode(size, body, fixErrors)
 	fileName = strings.Replace(fileName, ".ha"+format, ".deh", -1)
 	err = saveFile(fileName, decodedFile)
 	if err != nil {
@@ -112,7 +112,7 @@ func preDeHamming(size int) {
 	_, _ = fmt.Scanf("%s")
 }
 
-func deHamming7(file []byte) (ret []byte) {
+func deHamming7(file []byte, fixErrors bool) (ret []byte) {
 	var encoded1stByte, encoded2ndByte, bitsToSpare, decoded1stByte, decoded2ndByte, decodedByte byte
 	bitsToSpare = 0
 	two55 := exp(8) - 1 // 255
@@ -128,7 +128,7 @@ func deHamming7(file []byte) (ret []byte) {
 		//Move the leftover bit to the left
 		encoded1stByte >>= 1
 		//Append decoded half to decodedByte
-		decoded1stByte = decode7(encoded1stByte) << 4
+		decoded1stByte = decode7(encoded1stByte, fixErrors) << 4
 		//Save bits that does not belong to the hamming block
 		bitsToSpare = file[i] & (exp(j+1) - 1)
 		j++
@@ -151,7 +151,7 @@ func deHamming7(file []byte) (ret []byte) {
 			//Save bits that does not belong to the hamming block for the next iteration
 			bitsToSpare = file[i+1] & (exp(j+1) - 1)
 			//Append 2nd decoded half to decodedByte
-			decoded2ndByte = decode7(encoded2ndByte)
+			decoded2ndByte = decode7(encoded2ndByte, fixErrors)
 			decodedByte = decoded1stByte | decoded2ndByte
 		}
 		//Append decodedByte to ret
@@ -166,7 +166,7 @@ func deHamming7(file []byte) (ret []byte) {
 	return ret
 }
 
-func decode7(bait byte) (s byte) {
+func decode7(bait byte, fixErrors bool) (s byte) {
 	c1 := (bait & uint8(64)) >> 6
 	c2 := (bait & uint8(32)) >> 5
 	d1 := (bait & uint8(16)) >> 4
@@ -174,17 +174,19 @@ func decode7(bait byte) (s byte) {
 	d2 := (bait & uint8(4)) >> 2
 	d3 := (bait & uint8(2)) >> 1
 	d4 := (bait & uint8(1)) >> 0
-	//Calculate sindrome using xor
-	var s1, s2, s3 byte
+	if fixErrors {
+		//Calculate sindrome using xor
+		var s1, s2, s3 byte
 
-	s1 = (c1 ^ d1 ^ d2 ^ d4) << 0
-	s2 = (c2 ^ d1 ^ d3 ^ d4) << 1
-	s3 = (c3 ^ d2 ^ d3 ^ d4) << 2
+		s1 = (c1 ^ d1 ^ d2 ^ d4) << 0
+		s2 = (c2 ^ d1 ^ d3 ^ d4) << 1
+		s3 = (c3 ^ d2 ^ d3 ^ d4) << 2
 
-	s = s1 | s2 | s3
+		s = s1 | s2 | s3
 
-	if s != 0 {
-		bait = correct(bait, s)
+		if s != 0 {
+			bait = correct(bait, s)
+		}
 	}
 
 	d1 = (bait & uint8(16)) >> 4
@@ -235,7 +237,7 @@ func exp(exponent byte) (ret byte) {
 }
 
 //Check errors, invoke to the function decode for decoding all the input file and finally compress the result when it's necessary (32 and  1024 bits)
-func callDecode(size int, input []byte) []byte {
+func callDecode(size int, input []byte, fixErrors bool) []byte {
 	var decodedFile []byte
 	_, _, controlBitsQuantity := initialCase(size)
 	blockSize := size / 8
@@ -243,7 +245,9 @@ func callDecode(size int, input []byte) []byte {
 	sl := blockSize
 	//For every block of 32, 1024 or 32768 bits check errors and then decode it
 	for i := 0; i < len(input); i += blockSize {
-		checkError(size, input[il:sl], controlBitsQuantity)
+		if fixErrors {
+			checkError(size, input[il:sl], controlBitsQuantity)
+		}
 		aux := decode(size, input[il:sl], controlBitsQuantity)
 		for j := 0; j < len(aux); j++ {
 			decodedFile = append(decodedFile, aux[j])
@@ -252,7 +256,15 @@ func callDecode(size int, input []byte) []byte {
 		sl += blockSize
 	}
 	//Finally compress
-	return compress(decodedFile)
+	switch size {
+	case 32:
+		return compress32(decodedFile)
+	case 1024:
+		return compress1024(decodedFile)
+	case 32768:
+		return decodedFile
+	}
+	return nil
 }
 
 //Take the data bits from the hamming block of 32,1024 and 32768 bits
@@ -281,6 +293,9 @@ func decode(size int, input []byte, controlBitsQuantity int) []byte {
 			}
 		}
 	}
+	if size == 1024 {
+		decoded = append(decoded, 0)
+	}
 	return decoded
 }
 
@@ -291,7 +306,7 @@ func byteNumberDeHamming(position int) (int, int) {
 	return place, byteNumber
 }
 
-func compress(input []byte) []byte {
+func compress32(input []byte) []byte {
 	have := make([]int, len(input)/4)
 	need := make([]int, len(input)/4)
 	input = append(input, 0)
@@ -336,7 +351,7 @@ func compress(input []byte) []byte {
 			for j := 1; j < len(aux2); j++ {
 				compressed = append(compressed, aux2[j])
 			}
-			aux := ajustBytes(input[(i+2)*4:(i+2)*4+5], need[i]-have[i+1])
+			aux := ajustBytes(32, input[(i+2)*4:(i+2)*4+5], need[i]-have[i+1])
 			for j := 0; j < len(aux); j++ {
 				input[(i+2)*4+j] = aux[j]
 			}
@@ -356,7 +371,7 @@ func compress(input []byte) []byte {
 			}
 			need[i+1] += need[i]
 			have[i+1] -= need[i]
-			aux = ajustBytes(input[(i+1)*4:(i+1)*4+4+1], need[i])
+			aux = ajustBytes(32, input[(i+1)*4:(i+1)*4+4+1], need[i])
 			for j := 0; j < len(aux); j++ {
 				input[(i+1)*4+j] = aux[j]
 			}
@@ -370,6 +385,90 @@ func compress(input []byte) []byte {
 	}
 	for i := 0; i < 4; i++ {
 		compressed = append(compressed, input[len(input)-5+i])
+	}
+	return compressed[:]
+}
+
+func compress1024(input []byte) []byte {
+	bytesBlock := 1024 / 8
+	have := make([]int, (len(input)+1)/bytesBlock)
+	need := make([]int, (len(input)+1)/bytesBlock)
+	input = append(input, 0)
+	var compressed []byte
+	for i := 0; i < len(have); i++ {
+		have[i] = 1013
+		need[i] = 11
+	}
+	position := 5
+	for i := 0; i < (len(input)-1)/bytesBlock-1; i++ {
+		if need[i]%8 == 0 {
+			position = 5
+			for j := 0; j < have[i]/8; j++ {
+				compressed = append(compressed, input[i*bytesBlock+j])
+			}
+			for j := 0; j < need[i]/8; j++ {
+				compressed = append(compressed, input[(i+1)*bytesBlock+j])
+			}
+			need[i+1] += need[i]
+			have[i+1] -= need[i]
+			index := 0
+			for j := need[i] / 8; j < bytesBlock; j++ {
+				input[(i+1)*bytesBlock+index] = input[(i+1)*bytesBlock+j]
+				index++
+			}
+			for j := index; j < bytesBlock; j++ {
+				input[(i+1)*bytesBlock+j] = byte(0)
+			}
+		} else if need[i] > have[i+1] && i != (len(input)-1)/bytesBlock-2 {
+			aux1 := takeBitsDeHamming(have[i+1], input[(i+1)*bytesBlock:(i+1)*bytesBlock+bytesBlock+1], position)
+			aux2 := takeBitsDeHamming(need[i]-have[i+1], input[(i+2)*bytesBlock:(i+2)*bytesBlock+bytesBlock+1], (position+have[i+1])%8)
+			conflictByte1 := int(have[i] / 8)
+			for j := 0; j < conflictByte1; j++ {
+				compressed = append(compressed, input[i*bytesBlock+j])
+			}
+			compressed = append(compressed, input[i*bytesBlock+conflictByte1]|aux1[0])
+			for j := conflictByte1 + 1; j < len(aux1)-1; j++ {
+				compressed = append(compressed, aux1[j])
+			}
+			conflictByte2 := int(have[i+1] / 8)
+			compressed = append(compressed, aux1[conflictByte2]|aux2[0])
+			for j := 1; j < len(aux2); j++ {
+				compressed = append(compressed, aux2[j])
+			}
+			aux := ajustBytes(1024, input[(i+2)*bytesBlock:(i+2)*bytesBlock+bytesBlock+1], need[i]-have[i+1])
+			for j := 0; j < len(aux); j++ {
+				input[(i+2)*bytesBlock+j] = aux[j]
+			}
+			have[i+2] -= need[i] - have[i+1]
+			need[i+2] += need[i] - have[i+1]
+			i++
+			position = (position + 2) % 8
+		} else {
+			aux := takeBitsDeHamming(need[i], input[(i+1)*bytesBlock:(i+1)*bytesBlock+bytesBlock+1], position)
+			conflictByte := int(have[i] / 8)
+			for j := 0; j < conflictByte; j++ {
+				compressed = append(compressed, input[i*bytesBlock+j])
+			}
+			compressed = append(compressed, input[i*bytesBlock+conflictByte]|aux[0])
+			for j := 1; j < len(aux); j++ {
+				compressed = append(compressed, aux[j])
+			}
+			need[i+1] += need[i]
+			have[i+1] -= need[i]
+			aux = ajustBytes(1024, input[(i+1)*bytesBlock:(i+1)*bytesBlock+bytesBlock+1], need[i])
+			for j := 0; j < len(aux); j++ {
+				input[(i+1)*bytesBlock+j] = aux[j]
+			}
+			if need[i] == 1013 {
+				i++
+				position = (position + 2) % 8
+			} else {
+				position = (position + 5) % 8
+			}
+		}
+	}
+	for i := 0; i < bytesBlock; i++ {
+		compressed = append(compressed, input[len(input)-(bytesBlock+1)+i])
 	}
 	return compressed[:]
 }
@@ -402,10 +501,10 @@ func takeBitsDeHamming(bits int, input []byte, initialPosition int) []byte {
 	return ret
 }
 
-func ajustBytes(input []byte, begin int) []byte {
+func ajustBytes(size int, input []byte, begin int) []byte {
 	position := begin % 8
-	numberOfByte := byteNumber(begin, 4)
-	bytesQuantity := 4
+	bytesQuantity := size / 8
+	numberOfByte := byteNumber(begin, bytesQuantity)
 	ret := make([]byte, bytesQuantity)
 	ret[0] = ((doMask(8-position) >> byte(position)) & input[numberOfByte]) << byte(position)
 	aux := takeBitsDeHamming((len(input)-numberOfByte-2)*8, input[numberOfByte+1:], 8-position)

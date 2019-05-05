@@ -38,6 +38,10 @@ func IntroduceErrors() {
 		fileWithErrors = insertError(body, 1024)
 	case "ha4":
 		fileWithErrors = insertError(body, 32768)
+	default:
+		fmt.Println("La extension del archivo no es válida")
+		_, _ = fmt.Fscanf(r, "%s")
+		return
 	}
 
 	fmt.Println("Se han introducido errores de manera correcta.")
