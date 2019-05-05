@@ -1,6 +1,9 @@
 package Huffman
 
-import "github.com/pkg/errors"
+import (
+	"github.com/pkg/errors"
+	"strings"
+)
 
 type TreeNode struct {
 	Left  *TreeNode
@@ -46,30 +49,46 @@ func (tree *TreeNode) Insert(son1 *TreeNode, son2 *TreeNode) *TreeNode {
 	return root
 }
 
+func (tree *TreeNode) GenerateCodification(codification string, codifications []string) []string {
+	if tree.Right == nil && tree.Left == nil {
+		buffer := strings.Builder{}
+		buffer.WriteByte(tree.Value.Symbol)
+		codification = codification + buffer.String()
+		codifications = append(codifications, codification)
+		return codifications
+	}
+	codificationLeft := codification + "0"
+	codifications = tree.Left.GenerateCodification(codificationLeft, codifications)
+	codification += "1"
+	codifications = tree.Right.GenerateCodification(codification, codifications)
+	return codifications
+}
+
 //Example of use:
 /*
-	var item1, item2, item3 Huffman.Item
+    var item1, item2, item3, item4, item5 Huffman.Item
+	var code []string
+	var temp string
 	item1.Symbol = 97
 	item1.Weight = 2
 	item2.Symbol = 98
 	item2.Weight = 3
 	item3.Symbol = 99
-	item3.Weight = 4
-	var treeNode1, treeNode2, treeNode3, tree *Huffman.TreeNode
+	item3.Weight = 6
+	item4.Symbol = 100
+	item4.Weight = 8
+	item5.Symbol = 101
+	item5.Weight = 10
+	var treeNode1, treeNode2, treeNode3, treeNode4, treeNode5, tree *Huffman.TreeNode
 	treeNode1, _ = treeNode1.New(item1)
 	treeNode2, _ = treeNode2.New(item2)
 	treeNode3, _ = treeNode3.New(item3)
+	treeNode4, _ = treeNode4.New(item4)
+	treeNode5, _ = treeNode5.New(item5)
 	tree = tree.Insert(treeNode1, treeNode2)
 	tree = tree.Insert(tree, treeNode3)
-	fmt.Println(tree)
-*/
-//Resulting structure
-/*
-		                 (Symbol:0, Weight:9)
-						/					\
-(Symbol 99, Weight:4)						(Symbol: 0, Weight: 5)
-/				\							/						\
-nil				nil				(Symbol: 97, Weight: 2)				(Symbol: 98, Weight: 3)
-								/					\				/					\
-								nil					nil				nil					nil
+	tree = tree.Insert(tree, treeNode4)
+	tree = tree.Insert(tree, treeNode5)
+	fmt.Println(tree.GenerateCodification(temp,code))
+
 */
