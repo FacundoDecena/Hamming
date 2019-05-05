@@ -1,16 +1,17 @@
 package Huffman
 
+//Item coso
 type Item struct {
-	symbol byte
-	weight int
+	Symbol byte
+	Weight int
 }
 
 func toNode(table map[byte]int) (list []Item) {
 	var newNode Item
 
 	for key, value := range table {
-		newNode.symbol = key
-		newNode.weight = value
+		newNode.Symbol = key
+		newNode.Weight = value
 
 		list = append(list, newNode)
 	}
