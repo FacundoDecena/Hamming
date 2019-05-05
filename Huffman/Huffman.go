@@ -1,14 +1,36 @@
 package Huffman
 
-import "container/heap"
+import (
+	"container/heap"
+	"fmt"
+)
+
+func callHuffman(body []byte) {
+
+	// Init Variables
+	var listItems []*TreeNode
+	var priorityQueue PriorityQueue
+	var code []string
+
+	table := make(map[byte]int)
+	table = frequncies(body)
+	listItems = toItems(table)
+	priorityQueue = makeParva(listItems)
+
+	code = huffman(priorityQueue)
+
+	fmt.Println(code)
+
+}
 
 // Function huffman receives a priority queue and do a binary tree to make the huffman codification.
 
-func huffman(parva PriorityQueue) {
+func huffman(parva PriorityQueue) (codification []string) {
 
 	var listMin []*TreeNode
 	var tree *TreeNode
-	// var code []int32
+	var code []string
+	var temp string
 
 	heap.Init(&parva)
 
@@ -23,6 +45,8 @@ func huffman(parva PriorityQueue) {
 		}
 
 	}
+	codification = tree.GenerateCodification(temp, code)
+	return codification
 
 }
 

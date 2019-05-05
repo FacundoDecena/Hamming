@@ -51,6 +51,8 @@ func (tree *TreeNode) Insert(son1 *TreeNode, son2 *TreeNode) *TreeNode {
 	return root
 }
 
+// This function go through the binary tree making the huffman codification (to right is 1, to left is a 0).
+
 func (tree *TreeNode) GenerateCodification(codification string, codifications []string) []string {
 	if tree.Right == nil && tree.Left == nil {
 		buffer := strings.Builder{}
