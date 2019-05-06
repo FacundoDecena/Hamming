@@ -5,6 +5,8 @@
 * On deHamming, if the file does not exist in the directory the program
  does not show the corresponding message.
 * Not implemented the option of apply deHamming without correcting errors.
+* The dictionary in Huffman Interprets " ", "/n", "/r", etc. as the same
+ thing.
 
 #### Resolved
 
