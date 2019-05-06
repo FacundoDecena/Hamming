@@ -62,12 +62,19 @@ func callHuffman() {
 
 		code = huffman(priorityQueue)
 
-		encodedBody := encode(body, code)
+		encodedBody, dictionary := encode(body, code)
 
 		fileName = strings.Replace(fileName, "txt", "huf", -1)
 		err = saveFile(fileName, encodedBody)
 		if err != nil {
 			fmt.Println(err)
+			return
+		}
+		fileName = strings.Replace(fileName, "huf", "dic", -1)
+		err = saveFile(fileName, dictionary)
+		if err != nil {
+			fmt.Println(err)
+			return
 		}
 
 	}
@@ -129,19 +136,29 @@ func makeParva(listItems []*TreeNode) PriorityQueue {
 }
 
 //encode applies Huffman
-func encode(body []byte, code []string) (ret []byte) {
+func encode(body []byte, code []string) (ret []byte, dic []byte) {
 	//Create a dictionary
 	var table map[byte]uint32
 	table = toMap(code)
+	for k, v := range table {
+		//Appends the key
+		dic = append(dic, k)
+		//Separates the encode into 4 bytes
+		bs := make([]byte, 4)
+		binary.BigEndian.PutUint32(bs, v)
+		//Append the bytes to the dictionary
+		dic = append(dic, bs...)
+	}
 
 	for i := 0; i < len(body); i++ {
 		//Make a slice of bytes for the encode for each byte of body
 		bs := make([]byte, 4)
 		//the value for body[i](A byte) in the dictionary
 		binary.BigEndian.PutUint32(bs, table[body[i]])
+		//Append the encoded byte
 		ret = append(ret, bs...)
 	}
-	return ret
+	return ret, dic
 }
 
 //toMap: from an easy to build structure to an easy to use structure
@@ -155,7 +172,7 @@ func toMap(table []string) map[byte]uint32 {
 		var symbolString, codificationString string
 
 		//Split the substrings
-		fields := strings.Fields(table[i])
+		fields := strings.Split(table[i], "@@")
 
 		//strings.Fields separates the strings using white spaces, ignores the quantity
 		//If the symbol is a white strings.Fields ignores it and we do not like that
@@ -176,17 +193,14 @@ func toMap(table []string) map[byte]uint32 {
 		//Cut the codification to 32 bits
 		codification := uint32(codification64)
 		//Get the length of the codification
-		length := len(fields)
+		length := len(codificationString)
 		//Move the surplus 0 to the right
-		codification <<= uint32(32 - length - 1)
+		codification <<= uint32(32 - length)
 
-		//The same for the symbol
-		symbolInt, _ := strconv.ParseInt(symbolString, 2, 8)
+		//symbol has to be a byte
+		symbol := []byte(symbolString)
 
-		//But it has to be a byte
-		symbol := byte(symbolInt)
-
-		ret[symbol] = codification
+		ret[symbol[0]] = codification
 	}
 
 	return ret
