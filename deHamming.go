@@ -58,6 +58,8 @@ func preDeHamming7(fixErrors bool) {
 
 	if err != nil {
 		fmt.Println(err)
+		_, _ = fmt.Fscanf(r, "%s")
+		_, _ = fmt.Fscanf(r, "%s")
 		return
 	}
 	start = time.Now()
@@ -98,8 +100,11 @@ func preDeHamming(size int, fixErrors bool) {
 
 	if err != nil {
 		fmt.Println(err)
+		_, _ = fmt.Fscanf(r, "%d")
+		_, _ = fmt.Fscanf(r, "%d")
 		return
 	}
+
 	start = time.Now()
 	decodedFile := callDecode(size, body, fixErrors)
 	fileName = strings.Replace(fileName, ".ha"+format, ".deh", -1)
@@ -527,7 +532,7 @@ func checkError(size int, input []byte, controlBitsQuantity int) {
 		}
 		syndrome[i] = parity
 	}
-	syndrome[controlBitsQuantity-1] = takeBit(input[byteNumber(size-1, size/8)], 7, 0)
+	syndrome[controlBitsQuantity-1] = takeBit(input[byteNumber(size-1, size/8)], 0, 0)
 	correct := true
 	for i := 0; i < len(syndrome); i++ {
 		if syndrome[i] == 1 {
