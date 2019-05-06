@@ -1,6 +1,7 @@
 package main
 
 import (
+	"Hamming/Huffman"
 	"bufio"
 	"fmt"
 	"os"
@@ -18,7 +19,8 @@ func main() {
 		fmt.Println("3 - Introducir errores")
 		fmt.Println("4 - Desproteger sin corregir errores")
 		fmt.Println("5 - Ver detalles de archivos")
-		fmt.Println("6 - Salir")
+		fmt.Println("6 - Aplicar Huffman a un archivo")
+		fmt.Println("7 - Salir")
 		mainOp = 0
 		_, _ = fmt.Fscanf(r, "%d", &mainOp)
 		switch mainOp {
@@ -33,6 +35,8 @@ func main() {
 		case 5:
 			seeSize()
 		case 6:
+			Huffman.Huffman()
+		case 7:
 			continue_ = false
 		}
 	}
