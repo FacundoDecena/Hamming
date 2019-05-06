@@ -28,7 +28,7 @@ func Huffman() {
 		case 1:
 			callHuffman()
 		case 2:
-
+			callDeshuffman()
 		case 3:
 			continue_ = false
 		}
@@ -181,10 +181,10 @@ func toMap(table []string) map[byte]uint32 {
 			codificationString = fields[0]
 		} else {
 			//First string is the symbol
-			symbolString = fields[0]
+			symbolString = fields[1]
 
 			//The rest is the symbol's codification
-			codificationString = fields[1]
+			codificationString = fields[0]
 		}
 
 		//Parse the strings to int
