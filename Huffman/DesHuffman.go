@@ -31,16 +31,18 @@ func callDeshuffman() {
 func deshuffman(bodyCoded []byte, fileName string) (originalBody []byte) {
 
 	diccionary := make(map[uint32]byte)
-	diccionary = stractTable(fileName + ".dic")
+	diccionary = stractTable(fileName)
 	var integer uint32
 	var result byte
+	var numberOfShift int
 
 	for index := 0; index < len(bodyCoded); index++ {
 		bait := bodyCoded[index]
+		numberOfShift++
 		for count := 0; count < 8; count++ {
 			mask := doMask(count + 1)
 			baitAux := bait & mask
-			valor := uint(8 * (4 - (index + 1)))
+			valor := uint(8 * (4 - (numberOfShift)))
 			entero := uint32(baitAux)
 			integer |= entero << valor // 24 or 16 or 8 or 0
 			if diccionary[integer] != 0 {
@@ -49,6 +51,7 @@ func deshuffman(bodyCoded []byte, fileName string) (originalBody []byte) {
 				originalBody = append(originalBody, result)
 				integer = 0
 				count = 8
+				numberOfShift = 0
 			}
 		}
 
@@ -79,7 +82,8 @@ func stractTable(fileName string) map[uint32]byte {
 			arrByte = append(arrByte, body[index+3])
 			arrByte = append(arrByte, body[index+4])
 			code = (uint32(arrByte[0]) << 24) + (uint32(arrByte[1]) << 16) + (uint32(arrByte[2]) << 8) + uint32(arrByte[3])
-			fmt.Printf("%32b\n", code)
+			fmt.Printf("%c", code)
+
 			// making the table.
 			diccionary[code] = symbol
 			arrByte = nil
