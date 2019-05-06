@@ -34,8 +34,12 @@ func Huffman() {
 		switch mainOp {
 		case 1:
 			callHuffman()
+			fmt.Println("Huffman aplicado correctamente")
+			_, _ = fmt.Fscanf(r, "%s")
 		case 2:
 			callDeshuffman()
+			fmt.Println("Huffman descomprimido correctamente")
+			_, _ = fmt.Fscanf(r, "%s")
 		case 3:
 			continue_ = false
 		}
@@ -159,6 +163,7 @@ func encode(body []byte, code []string) (ret []byte, dic []byte) {
 		}
 		//Append the values to the dictionary
 		dic = append(dic, c...)
+		dic = append(dic, byte(v.Length))
 	}
 	length = 0
 	for i := 0; i < len(body); i++ {
