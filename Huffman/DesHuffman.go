@@ -31,19 +31,27 @@ func callDeshuffman() {
 func deshuffman(bodyCoded []byte, fileName string) (originalBody []byte) {
 
 	diccionary := make(map[uint32]byte)
-	diccionary = stractTable(fileName)
-	var arrByte []byte
+	diccionary = stractTable(fileName + ".dic")
+	var integer uint32
 	var result byte
 
 	for index := 0; index < len(bodyCoded); index++ {
-		arrByte = append(arrByte, bodyCoded[index])
-		if len(arrByte) == 4 {
-			integer := (uint32(arrByte[0]) << 24) + (uint32(arrByte[1]) << 16) + (uint32(arrByte[2]) << 8) + uint32(arrByte[3])
-			result = diccionary[integer]
-			originalBody = append(originalBody, result)
-			arrByte = nil
-
+		bait := bodyCoded[index]
+		for count := 0; count < 8; count++ {
+			mask := doMask(count + 1)
+			baitAux := bait & mask
+			valor := uint(8 * (4 - (index + 1)))
+			entero := uint32(baitAux)
+			integer |= entero << valor // 24 or 16 or 8 or 0
+			if diccionary[integer] != 0 {
+				// Element found.
+				result = diccionary[integer]
+				originalBody = append(originalBody, result)
+				integer = 0
+				count = 8
+			}
 		}
+
 	}
 	return originalBody
 
