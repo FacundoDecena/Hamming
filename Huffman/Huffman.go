@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"os"
 	"os/exec"
 	"strconv"
@@ -138,25 +139,19 @@ func makeParva(listItems []*TreeNode) PriorityQueue {
 //encode applies Huffman
 func encode(body []byte, code []string) (ret []byte, dic []byte) {
 	//Create a dictionary
-	var table map[byte]uint32
+	var table map[byte][]byte
 	table = toMap(code)
 	for k, v := range table {
 		//Appends the key
 		dic = append(dic, k)
-		//Separates the encode into 4 bytes
-		bs := make([]byte, 4)
-		binary.BigEndian.PutUint32(bs, v)
-		//Append the bytes to the dictionary
-		dic = append(dic, bs...)
+
+		//Append the values to the dictionary
+		dic = append(dic, v...)
 	}
 
 	for i := 0; i < len(body); i++ {
-		//Make a slice of bytes for the encode for each byte of body
-		bs := make([]byte, 4)
-		//the value for body[i](A byte) in the dictionary
-		binary.BigEndian.PutUint32(bs, table[body[i]])
 		//Append the encoded byte
-		ret = append(ret, bs...)
+		ret = append(ret, table[body[i]]...)
 	}
 	return ret, dic
 }
@@ -165,8 +160,9 @@ func encode(body []byte, code []string) (ret []byte, dic []byte) {
 //
 //gets a slice of strings. Each string consist of a symbol and its huffman codification.
 //Returns a map with the symbols as keys and codifications as values.
-func toMap(table []string) map[byte]uint32 {
-	ret := make(map[byte]uint32)
+func toMap(table []string) map[byte][]byte {
+	//ret := make(map[byte]uint32)
+	ret := make(map[byte][]byte)
 
 	for i := 0; i < len(table); i++ {
 		var symbolString, codificationString string
@@ -197,10 +193,17 @@ func toMap(table []string) map[byte]uint32 {
 		//Move the surplus 0 to the right
 		codification <<= uint32(32 - length)
 
+		//Make a slice of bytes for the encode for each byte of body
+		bs := make([]byte, 4)
+		//Split the int32 into bytes
+		binary.BigEndian.PutUint32(bs, codification)
+
+		bs = takeBitsDeHamming(length, bs, 0)
+
 		//symbol has to be a byte
 		symbol := []byte(symbolString)
 
-		ret[symbol[0]] = codification
+		ret[symbol[0]] = bs
 	}
 
 	return ret
@@ -228,4 +231,51 @@ func loadFile(fileName string) ([]byte, error) {
 
 func saveFile(fileName string, body []byte) error {
 	return ioutil.WriteFile(fileName, body, 0600)
+}
+
+//takeButsDeHamming
+//
+//bits is the amount of bits you need.
+//input is the original byte slice.
+//initialPosition are the left shift to apply
+func takeBitsDeHamming(bits int, input []byte, initialPosition int) []byte {
+	aux := input[len(input)-1]
+	input[len(input)-1] = byte(0)
+	bytesQuantity := int(math.Ceil(float64(bits+initialPosition) / float64(8)))
+	ret := make([]byte, bytesQuantity)
+	if initialPosition == 0 {
+		for i := 0; i < bytesQuantity; i++ {
+			ret[i] = input[i]
+		}
+		if bits%8 != 0 {
+			ret[bytesQuantity-1] &= doMask(bits % 8)
+		}
+	} else {
+		garbage := byte(0)
+		for i := 0; i < bytesQuantity; i++ {
+			ret[i] = garbage | ((doMask(8-initialPosition) & input[i]) >> byte(initialPosition))
+			garbage = ((doMask(initialPosition) >> byte(8-initialPosition)) & input[i]) << byte(8-initialPosition)
+		}
+		mask := (bits%8 + initialPosition) % 8
+		if mask == 0 {
+			mask = 8
+		}
+		ret[bytesQuantity-1] &= doMask(mask)
+	}
+	input[len(input)-1] = aux
+	return ret
+}
+
+// This function make a mask to take bits from a byte (left to right).
+func doMask(bits int) uint8 {
+	if bits > 8 {
+		return uint8(0)
+	} else if bits < 0 {
+		return uint8(0)
+	} else {
+		val_mask := math.Pow(2, float64(bits)) - 1
+		mask := uint8(val_mask) << uint(8-bits)
+		return mask
+	}
+
 }
