@@ -154,6 +154,9 @@ func encode(body []byte, code []string) (ret []byte, dic []byte) {
 		//Appends the key
 		dic = append(dic, k)
 		c := v.Codification
+		for len(c) < 4 {
+			c = append(c, 0)
+		}
 		//Append the values to the dictionary
 		dic = append(dic, c...)
 	}
