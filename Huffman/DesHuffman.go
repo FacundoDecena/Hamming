@@ -28,10 +28,10 @@ func callDeshuffman() {
 	}
 }
 
-func deshuffman(bodyCoded []byte, fileName string) (originalBody []byte) {
+func deshuffman(bodyCoded []byte, filename string) (originalBody []byte) {
 
 	diccionary := make(map[uint32]byte)
-	diccionary = stractTable(fileName)
+	diccionary = stractTable("pruebahuffman.txt")
 	var integer uint32
 	var result byte
 	var numberOfShift int
@@ -82,8 +82,7 @@ func stractTable(fileName string) map[uint32]byte {
 			arrByte = append(arrByte, body[index+3])
 			arrByte = append(arrByte, body[index+4])
 			code = (uint32(arrByte[0]) << 24) + (uint32(arrByte[1]) << 16) + (uint32(arrByte[2]) << 8) + uint32(arrByte[3])
-			fmt.Printf("%c", code)
-
+			fmt.Printf("%32b\n", code)
 			// making the table.
 			diccionary[code] = symbol
 			arrByte = nil

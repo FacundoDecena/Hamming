@@ -3,10 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
-	//Para que le ande a ustedes
-	//"github.com/FacundoDecena/Hamming/Huffman"
-	//Para que me ande a mi
-	"Hamming/Huffman"
+	"github.com/FacundoDecena/Hamming/Huffman"
 	"os"
 	"os/exec"
 )
