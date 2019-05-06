@@ -1,5 +1,6 @@
 ## Known Issues
 * Dehamming 32, 1024, 32768 generate bytes with 0 values at the end of the file
+* Huffman does not compress the file
 
 
 
