@@ -106,17 +106,23 @@ func toMap(table []string) map[byte]uint32 {
 	ret := make(map[byte]uint32)
 
 	for i := 0; i < len(table); i++ {
+		var symbolString, codificationString string
+
 		//Split the substrings
 		fields := strings.Fields(table[i])
 
-		//First string is the symbol
-		symbolString := fields[0]
+		//strings.Fields separates the strings using white spaces, ignores the quantity
+		//If the symbol is a white strings.Fields ignores it and we do not like that
+		if len(fields) == 1 {
+			symbolString = " "
+			codificationString = fields[0]
+		} else {
+			//First string is the symbol
+			symbolString = fields[0]
 
-		//The rest is the symbol's codification
-		codifications := fields[1:]
-
-		//Join all the strings from the codification (Since use chars to do that)
-		codificationString := strings.Join(codifications, "")
+			//The rest is the symbol's codification
+			codificationString = fields[1]
+		}
 
 		//Parse the strings to int
 		codification64, _ := strconv.ParseInt(codificationString, 2, 32)
