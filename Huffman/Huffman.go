@@ -13,6 +13,12 @@ import (
 	"strings"
 )
 
+//codificationAndLength
+type CAL struct {
+	Codification []byte
+	Length       int
+}
+
 func Huffman() {
 	var mainOp int
 	r := bufio.NewReader(os.Stdin)
@@ -139,30 +145,58 @@ func makeParva(listItems []*TreeNode) PriorityQueue {
 //encode applies Huffman
 func encode(body []byte, code []string) (ret []byte, dic []byte) {
 	//Create a dictionary
-	var table map[byte][]byte
+	var table map[byte]CAL
+	var length int
+	var tempCode byte
+	//var codification []byte
 	table = toMap(code)
 	for k, v := range table {
 		//Appends the key
 		dic = append(dic, k)
-
+		c := v.Codification
 		//Append the values to the dictionary
-		dic = append(dic, v...)
+		dic = append(dic, c...)
 	}
-
+	length = 0
 	for i := 0; i < len(body); i++ {
-		//Append the encoded byte
-		ret = append(ret, table[body[i]]...)
+		codificationI := table[body[i]].Codification
+		lengthI := table[body[i]].Length
+		//Compression
+		for j := 0; j < len(codificationI); j++ {
+			//Get the first byte
+			codeJ := codificationI[j]
+			//If the codification is not long enough keep going
+			if length+lengthI < 8 {
+				codeJ >>= uint(length)
+				tempCode = tempCode | codeJ
+				length += lengthI
+			} else {
+				//Save the part that fits in the byte
+				firstPart := codeJ & ((exp(byte(length)) - 1) << uint(8-length))
+				//Save the part that does not fit in the byte
+				secondPart := codeJ & (exp(byte(8-length)) - 1)
+				//Complete the byte
+				tempCode = tempCode | (firstPart >> uint(length))
+				//Save the completed byte to the ret structure
+				ret = append(ret, tempCode)
+				//Take the part that did not fit the byte
+				tempCode = secondPart
+				length = 8 - length - lengthI
+			}
+		}
 	}
+	//Append the surplus
+	ret = append(ret, tempCode)
 	return ret, dic
 }
 
 //toMap: from an easy to build structure to an easy to use structure
 //
 //gets a slice of strings. Each string consist of a symbol and its huffman codification.
-//Returns a map with the symbols as keys and codifications as values.
-func toMap(table []string) map[byte][]byte {
+//Returns a map with the symbols as keys and codifications with them length as values.
+func toMap(table []string) map[byte]CAL {
 	//ret := make(map[byte]uint32)
-	ret := make(map[byte][]byte)
+	ret := make(map[byte]CAL)
 
 	for i := 0; i < len(table); i++ {
 		var symbolString, codificationString string
@@ -194,16 +228,16 @@ func toMap(table []string) map[byte][]byte {
 		codification <<= uint32(32 - length)
 
 		//Make a slice of bytes for the encode for each byte of body
-		bs := make([]byte, 4)
+		bs := make([]byte, 5)
 		//Split the int32 into bytes
 		binary.BigEndian.PutUint32(bs, codification)
 
-		bs = takeBitsDeHamming(length, bs, 0)
+		bs = takeBitsHuffman(length, bs, 0)
 
 		//symbol has to be a byte
 		symbol := []byte(symbolString)
 
-		ret[symbol[0]] = bs
+		ret[symbol[0]] = CAL{Codification: bs, Length: length}
 	}
 
 	return ret
@@ -236,9 +270,9 @@ func saveFile(fileName string, body []byte) error {
 //takeButsDeHamming
 //
 //bits is the amount of bits you need.
-//input is the original byte slice.
+//input is the original byte slice. An extra byte is required
 //initialPosition are the left shift to apply
-func takeBitsDeHamming(bits int, input []byte, initialPosition int) []byte {
+func takeBitsHuffman(bits int, input []byte, initialPosition int) []byte {
 	aux := input[len(input)-1]
 	input[len(input)-1] = byte(0)
 	bytesQuantity := int(math.Ceil(float64(bits+initialPosition) / float64(8)))
@@ -278,4 +312,13 @@ func doMask(bits int) uint8 {
 		return mask
 	}
 
+}
+
+func exp(exponent byte) (ret byte) {
+	ret = 1
+	var i byte
+	for i = 0; i < exponent; i++ {
+		ret *= 2
+	}
+	return ret
 }
