@@ -488,6 +488,11 @@ func compress1024(input []byte) []byte {
 	return compressed
 }
 
+//takeButsDeHamming
+//
+//bits is the amount of bits you need.
+//input is the original byte slice.
+//initialPosition are the left shift to apply
 func takeBitsDeHamming(bits int, input []byte, initialPosition int) []byte {
 	aux := input[len(input)-1]
 	input[len(input)-1] = byte(0)
