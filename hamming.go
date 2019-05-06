@@ -59,23 +59,31 @@ func preHamming(size int) {
 		_, _ = fmt.Fscanf(r, "%s")
 		return
 	} else {
-		start = time.Now()
 		switch size {
 		case 7:
-			encodedBody = hamming7(body)
 			fileType = ".ha1"
 		case 32:
-			encodedBody = hamming(size, body)
 			fileType = ".ha2"
 		case 1024:
-			encodedBody = hamming(size, body)
 			fileType = ".ha3"
 		case 32768:
-			encodedBody = hamming(size, body)
 			fileType = ".ha4"
-
 		}
-
+		start = time.Now()
+		if len(body) == 0 {
+			encodedBody = []byte{}
+		} else {
+			switch size {
+			case 7:
+				encodedBody = hamming7(body)
+			case 32:
+				encodedBody = hamming(size, body)
+			case 1024:
+				encodedBody = hamming(size, body)
+			case 32768:
+				encodedBody = hamming(size, body)
+			}
+		}
 		fileName = strings.Replace(fileName, ".txt", fileType, -1)
 		err = saveFile(fileName, encodedBody)
 		if err != nil {

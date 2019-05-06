@@ -12,3 +12,4 @@
 * ~~Not implemented the option of apply deHamming without correcting errors.~~
 * ~~On deHamming, if the file does not exist in the directory the program
  does not show the corresponding message.~~
+ * ~~The empty file causes an exception in Hamming 32,1024 and 32768~~

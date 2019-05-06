@@ -1,7 +1,6 @@
 package main
 
 import (
-	"Hamming/Huffman"
 	"bufio"
 	"fmt"
 	"os"

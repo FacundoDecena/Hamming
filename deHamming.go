@@ -74,49 +74,6 @@ func preDeHamming7(fixErrors bool) {
 	_, _ = fmt.Scanf("%s")
 }
 
-func preDeHamming(size int, fixErrors bool) {
-	var fileName string
-	var body []byte
-	var err error
-	var start time.Time
-	r := bufio.NewReader(os.Stdin)
-	clearScreen()
-	var format string
-	switch size {
-	case 32:
-		format = "2"
-	case 1024:
-		format = "3"
-	case 32768:
-		format = "4"
-
-	}
-	fmt.Println("Ingrese el nombre del archivo .ha" + format)
-	_, _ = fmt.Fscanf(r, "%s", &fileName)
-
-	fileName += ".ha" + format
-
-	body, err = loadFile(fileName)
-
-	if err != nil {
-		fmt.Println(err)
-		_, _ = fmt.Fscanf(r, "%d")
-		_, _ = fmt.Fscanf(r, "%d")
-		return
-	}
-
-	start = time.Now()
-	decodedFile := callDecode(size, body, fixErrors)
-	fileName = strings.Replace(fileName, ".ha"+format, ".deh", -1)
-	err = saveFile(fileName, decodedFile)
-	if err != nil {
-		fmt.Println(err)
-	}
-	elapsed := time.Since(start)
-	log.Printf("\nDeHamming took %s", elapsed)
-	_, _ = fmt.Scanf("%s")
-}
-
 func deHamming7(file []byte, fixErrors bool) (ret []byte) {
 	var encoded1stByte, encoded2ndByte, bitsToSpare, decoded1stByte, decoded2ndByte, decodedByte byte
 	bitsToSpare = 0
@@ -232,13 +189,52 @@ func correct(bait byte, syndrome byte) (corrected byte) {
 	return corrected
 }
 
-func exp(exponent byte) (ret byte) {
-	ret = 1
-	var i byte
-	for i = 0; i < exponent; i++ {
-		ret *= 2
+func preDeHamming(size int, fixErrors bool) {
+	var fileName string
+	var body []byte
+	var err error
+	var start time.Time
+	r := bufio.NewReader(os.Stdin)
+	clearScreen()
+	var format string
+	switch size {
+	case 32:
+		format = "2"
+	case 1024:
+		format = "3"
+	case 32768:
+		format = "4"
+
 	}
-	return ret
+	fmt.Println("Ingrese el nombre del archivo .ha" + format)
+	_, _ = fmt.Fscanf(r, "%s", &fileName)
+
+	fileName += ".ha" + format
+
+	body, err = loadFile(fileName)
+
+	if err != nil {
+		fmt.Println(err)
+		_, _ = fmt.Fscanf(r, "%d")
+		_, _ = fmt.Fscanf(r, "%d")
+		return
+	}
+
+	start = time.Now()
+	var decodedFile []byte
+	if len(body) == 0 {
+		decodedFile = []byte{}
+	} else {
+		decodedFile = callDecode(size, body, fixErrors)
+	}
+	fileName = strings.Replace(fileName, ".ha"+format, ".deh", -1)
+	err = saveFile(fileName, decodedFile)
+	if err != nil {
+		fmt.Println(err)
+	}
+	elapsed := time.Since(start)
+	log.Printf("\nDeHamming took %s", elapsed)
+	_, _ = fmt.Scanf("%s")
 }
 
 //Check errors, invoke to the function decode for decoding all the input file and finally compress the result when it's necessary (32 and  1024 bits)
@@ -261,15 +257,17 @@ func callDecode(size int, input []byte, fixErrors bool) []byte {
 		sl += blockSize
 	}
 	//Finally compress
+	var ret []byte
 	switch size {
 	case 32:
-		return compress32(decodedFile)
+		ret = compress32(decodedFile)
 	case 1024:
-		return compress1024(decodedFile)
+		ret = compress1024(decodedFile)
 	case 32768:
-		return decodedFile
+		ret = decodedFile
 	}
-	return nil
+	zeroQuantity := howManyZeros(ret[len(ret)-blockSize:])
+	return ret[:len(ret)-zeroQuantity]
 }
 
 //Take the data bits from the hamming block of 32,1024 and 32768 bits
@@ -389,9 +387,15 @@ func compress32(input []byte) []byte {
 		}
 	}
 	for i := 0; i < 4; i++ {
-		compressed = append(compressed, input[len(input)-5+i])
+		if len(input) != 5 {
+			if input[len(input)-5+i] != 0 {
+				compressed = append(compressed, input[len(input)-5+i])
+			}
+		} else {
+			compressed = append(compressed, input[len(input)-5+i])
+		}
 	}
-	return compressed[:]
+	return compressed
 }
 
 func compress1024(input []byte) []byte {
@@ -473,9 +477,15 @@ func compress1024(input []byte) []byte {
 		}
 	}
 	for i := 0; i < bytesBlock; i++ {
-		compressed = append(compressed, input[len(input)-(bytesBlock+1)+i])
+		if len(input) != bytesBlock+1 {
+			if input[len(input)-(bytesBlock+1)+i] != 0 {
+				compressed = append(compressed, input[len(input)-(bytesBlock+1)+i])
+			}
+		} else {
+			compressed = append(compressed, input[len(input)-(bytesBlock+1)+i])
+		}
 	}
-	return compressed[:]
+	return compressed
 }
 
 func takeBitsDeHamming(bits int, input []byte, initialPosition int) []byte {
@@ -557,4 +567,23 @@ func checkError(size int, input []byte, controlBitsQuantity int) {
 		wom := input[numberOfByte] & (255 - exp(byte(7-position)))
 		input[numberOfByte] = wom | mistake
 	}
+}
+
+func howManyZeros(input []byte) int {
+	countZeros := 0
+	for i := len(input) - 1; i >= 0; i-- {
+		if input[i] == 0 {
+			countZeros++
+		}
+	}
+	return countZeros
+}
+
+func exp(exponent byte) (ret byte) {
+	ret = 1
+	var i byte
+	for i = 0; i < exponent; i++ {
+		ret *= 2
+	}
+	return ret
 }
