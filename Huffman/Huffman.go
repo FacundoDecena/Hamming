@@ -1,32 +1,79 @@
 package Huffman
 
 import (
+	"bufio"
 	"container/heap"
 	"encoding/binary"
+	"fmt"
+	"io/ioutil"
+	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 )
 
-func callHuffman(body []byte) {
+func Huffman() {
+	var mainOp int
+	r := bufio.NewReader(os.Stdin)
+	continue_ := true
+	for continue_ {
+		clearScreen()
+		fmt.Println("1 - Codificar")
+		fmt.Println("2 - Decodificar")
+		fmt.Println("3 - Salir")
+		mainOp = 0
+		_, _ = fmt.Fscanf(r, "%d", &mainOp)
+		_, _ = fmt.Fscanf(r, "%s")
+		switch mainOp {
+		case 1:
+			callHuffman()
+		case 2:
 
-	// Init Variables
-	var listItems []*TreeNode
-	var priorityQueue PriorityQueue
-	var code []string
+		case 3:
+			continue_ = false
+		}
+	}
+}
 
-	table := make(map[byte]int)
-	table = frequncies(body)
-	listItems = toItems(table)
-	priorityQueue = makeParva(listItems)
+func callHuffman() {
+	var fileName string
 
-	code = huffman(priorityQueue)
+	r := bufio.NewReader(os.Stdin)
 
-	encode(body, code)
+	clearScreen()
+	fmt.Println("Ingrese el nombre del archivo")
+	_, _ = fmt.Fscanf(r, "%s", &fileName)
+	//Since golang does not show the time a program runs...
 
+	body, err := loadFile(fileName)
+
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		// Init Variables
+		var listItems []*TreeNode
+		var priorityQueue PriorityQueue
+		var code []string
+
+		table := make(map[byte]int)
+		table = frequncies(body)
+		listItems = toItems(table)
+		priorityQueue = makeParva(listItems)
+
+		code = huffman(priorityQueue)
+
+		encodedBody := encode(body, code)
+
+		fileName = strings.Replace(fileName, "txt", "huf", -1)
+		err = saveFile(fileName, encodedBody)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+	}
 }
 
 // Function huffman receives a priority queue and do a binary tree to make the huffman codification.
-
 func huffman(parva PriorityQueue) (codification []string) {
 
 	var listMin []*TreeNode
@@ -53,7 +100,6 @@ func huffman(parva PriorityQueue) (codification []string) {
 }
 
 // This function take the map (table of frequencies) and make de list of tree nodes.
-
 func toItems(table map[byte]int) (list []*TreeNode) {
 
 	for key, value := range table {
@@ -70,7 +116,6 @@ func toItems(table map[byte]int) (list []*TreeNode) {
 }
 
 // This function make the parva with a priority queue with the list of items.
-
 func makeParva(listItems []*TreeNode) PriorityQueue {
 
 	priorityQueue := make(PriorityQueue, len(listItems))
@@ -83,6 +128,7 @@ func makeParva(listItems []*TreeNode) PriorityQueue {
 	return priorityQueue
 }
 
+//encode applies Huffman
 func encode(body []byte, code []string) (ret []byte) {
 	//Create a dictionary
 	var table map[byte]uint32
@@ -144,4 +190,28 @@ func toMap(table []string) map[byte]uint32 {
 	}
 
 	return ret
+}
+
+func clearScreen() {
+	cmd := exec.Command("cmd", "/c", "cls") //Windows example, its tested
+	cmd.Stdout = os.Stdout
+	_ = cmd.Run()
+	fmt.Println("#####################################")
+	fmt.Println("_______________HUFFMAN_______________")
+	fmt.Println("#####################################")
+	fmt.Println()
+}
+
+func loadFile(fileName string) ([]byte, error) {
+	var err error
+	var body []byte
+	body, err = ioutil.ReadFile(fileName)
+	if err != nil {
+		return nil, err
+	}
+	return body, nil
+}
+
+func saveFile(fileName string, body []byte) error {
+	return ioutil.WriteFile(fileName, body, 0600)
 }
