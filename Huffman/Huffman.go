@@ -185,8 +185,11 @@ func encode(body []byte, code []string) (ret []byte, dic []byte) {
 			}
 		}
 	}
-	//Append the surplus
-	ret = append(ret, tempCode)
+	if length != 0 {
+		//Append the surplus
+		ret = append(ret, tempCode)
+	}
+
 	return ret, dic
 }
 
