@@ -28,7 +28,7 @@ func Huffman() {
 		case 1:
 			callHuffman()
 		case 2:
-
+			callDeshuffman()
 		case 3:
 			continue_ = false
 		}
