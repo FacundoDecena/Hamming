@@ -4,6 +4,11 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/FacundoDecena/Hamming/Huffman"
+
+	//Para que le ande a ustedes
+	//"github.com/FacundoDecena/Hamming/Huffman"
+	//Para que me ande a mi
+	//"Hamming/Huffman"
 	"os"
 	"os/exec"
 )
