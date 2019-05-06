@@ -2,7 +2,9 @@ package Huffman
 
 import (
 	"container/heap"
-	"fmt"
+	"encoding/binary"
+	"strconv"
+	"strings"
 )
 
 func callHuffman(body []byte) {
@@ -19,7 +21,7 @@ func callHuffman(body []byte) {
 
 	code = huffman(priorityQueue)
 
-	fmt.Println(code)
+	encode(body, code)
 
 }
 
@@ -79,4 +81,61 @@ func makeParva(listItems []*TreeNode) PriorityQueue {
 	}
 
 	return priorityQueue
+}
+
+func encode(body []byte, code []string) (ret []byte) {
+	//Create a dictionary
+	var table map[byte]uint32
+	table = toMap(code)
+
+	for i := 0; i < len(body); i++ {
+		//Make a slice of bytes for the encode for each byte of body
+		bs := make([]byte, 4)
+		//the value for body[i](A byte) in the dictionary
+		binary.BigEndian.PutUint32(bs, table[body[i]])
+		ret = append(ret, bs...)
+	}
+	return ret
+}
+
+//toMap: from an easy to build structure to an easy to use structure
+//
+//gets a slice of strings. Each string consist of a symbol and its huffman codification.
+//Returns a map with the symbols as keys and codifications as values.
+func toMap(table []string) map[byte]uint32 {
+	ret := make(map[byte]uint32)
+
+	for i := 0; i < len(table); i++ {
+		//Split the substrings
+		fields := strings.Fields(table[i])
+
+		//First string is the symbol
+		symbolString := fields[0]
+
+		//The rest is the symbol's codification
+		codifications := fields[1:]
+
+		//Join all the strings from the codification (Since use chars to do that)
+		codificationString := strings.Join(codifications, "")
+
+		//Parse the strings to int
+		codification64, _ := strconv.ParseInt(codificationString, 2, 32)
+
+		//Cut the codification to 32 bits
+		codification := uint32(codification64)
+		//Get the length of the codification
+		length := len(fields)
+		//Move the surplus 0 to the right
+		codification <<= uint32(32 - length - 1)
+
+		//The same for the symbol
+		symbolInt, _ := strconv.ParseInt(symbolString, 2, 8)
+
+		//But it has to be a byte
+		symbol := byte(symbolInt)
+
+		ret[symbol] = codification
+	}
+
+	return ret
 }

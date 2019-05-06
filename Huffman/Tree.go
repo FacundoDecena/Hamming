@@ -55,7 +55,7 @@ func (tree *TreeNode) GenerateCodification(codification string, codifications []
 	if tree.Right == nil && tree.Left == nil {
 		buffer := strings.Builder{}
 		buffer.WriteByte(tree.Value.Symbol)
-		codification = buffer.String() + codification
+		codification = buffer.String() + "@@" + codification
 		codifications = append(codifications, codification)
 		return codifications
 	}
