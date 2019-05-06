@@ -44,7 +44,8 @@ func seeSize() {
 			case ".ha3":
 				fmt.Print("\n\n hamming 1024 tiene un tamaño de: ", len(body), " Bytes ", " o ", len(body)/1024, " KB")
 			case ".ha4":
-				fmt.Print("\n\n hamming 36768 tiene un tamaño de: ", len(body), " Bytes ", " o ", len(body)/1024, " KB")
+				fmt.Print("\n\n hamming 32"+
+					"768 tiene un tamaño de: ", len(body), " Bytes ", " o ", len(body)/1024, " KB")
 
 			}
 
