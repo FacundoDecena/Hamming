@@ -55,6 +55,9 @@ func preHamming(size int) {
 	var fileType string
 	if err != nil {
 		fmt.Println(err)
+		_, _ = fmt.Fscanf(r, "%s")
+		_, _ = fmt.Fscanf(r, "%s")
+		return
 	} else {
 		start = time.Now()
 		switch size {
@@ -176,8 +179,46 @@ func hamming(size int, file []byte) []byte {
 		x := callTakeBits(1013, file)
 		ret = callEncode(size, x)
 	case 32768:
-		x := callTakeBits(32752, file)
+		x := convertTo32752(file)
 		ret = callEncode(size, x)
+	}
+	return ret
+}
+
+func convertTo32752(input []byte) [][]byte {
+	ret := make([][]byte, int(math.Ceil(float64(len(input))/float64(4094))))
+	il := 0
+	var sl int
+	if len(input) < 4094 {
+		sl = len(input)
+	} else {
+		sl = 4094
+	}
+	breakLastPosition := false
+	var i int
+	for i = 0; i < len(ret); i++ {
+		if sl-il == 4094 {
+			ret[i] = input[il:sl]
+			il += 4094
+			if len(input)-(i+1)*4094 < 4094 {
+				sl += len(input) - (i+1)*4094
+			} else {
+				sl += 4094
+			}
+		} else {
+			breakLastPosition = true
+			break
+		}
+	}
+	if breakLastPosition {
+		var lastPosition []byte
+		for j := il; j < sl; j++ {
+			lastPosition = append(lastPosition, input[j])
+		}
+		for j := 0; j < 4094-sl%4094; j++ {
+			lastPosition = append(lastPosition, 0)
+		}
+		ret[i] = lastPosition
 	}
 	return ret
 }
