@@ -172,7 +172,7 @@ func toMap(table []string) map[byte]uint32 {
 		var symbolString, codificationString string
 
 		//Split the substrings
-		fields := strings.Fields(table[i])
+		fields := strings.Split(table[i], "@@")
 
 		//strings.Fields separates the strings using white spaces, ignores the quantity
 		//If the symbol is a white strings.Fields ignores it and we do not like that
