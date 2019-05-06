@@ -1,9 +1,9 @@
 package main
 
 import (
+	"Hamming/Huffman"
 	"bufio"
 	"fmt"
-	"github.com/FacundoDecena/Hamming/Huffman"
 	"os"
 	"os/exec"
 )
