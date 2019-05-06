@@ -1,6 +1,5 @@
 ## Known Issues
-* Dehamming 32, 1024, 32768 generate bytes with 0 values at the end of the file
-
+* Hamming 1024 decode wrong and also remove some bytes 
 
 #### Resolved
 
@@ -11,3 +10,4 @@
 * ~~On deHamming, if the file does not exist in the directory the program
  does not show the corresponding message.~~
  * ~~Huffman does not compress the file~~
+ * ~~Dehamming 32, 1024, 32768 generate bytes with 0 values at the end of the file~~
