@@ -1,25 +1,37 @@
 package Huffman
 
-import "fmt"
+import (
+	"bufio"
+	"fmt"
+	"os"
+)
 
 func callDeshuffman() {
 	var ret []byte
-	body, err := loadFile("pruebaComprimido.txt")
+
+	var fileName string
+	r := bufio.NewReader(os.Stdin)
+
+	clearScreen()
+	fmt.Println("Ingrese el nombre del archivo sin extension")
+	_, _ = fmt.Fscanf(r, "%s", &fileName)
+
+	body, err := loadFile(fileName + ".huf")
 	if err != nil {
 		fmt.Println(err)
 	} else {
 		fmt.Printf("El texto comprimido es : %c \n", body)
 
-		ret = deshuffman(body)
+		ret = deshuffman(body, fileName+".dic")
 
-		fmt.Printf("el texto es: %c", ret)
+		fmt.Printf("el texto es: %c\n\n", ret)
 	}
 }
 
-func deshuffman(bodyCoded []byte) (originalBody []byte) {
+func deshuffman(bodyCoded []byte, fileName string) (originalBody []byte) {
 
 	diccionary := make(map[uint32]byte)
-	diccionary = stractTable("pruebahuffman.txt")
+	diccionary = stractTable(fileName)
 	var arrByte []byte
 	var result byte
 
