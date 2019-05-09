@@ -27,7 +27,7 @@ func DeHamming(fixErrors bool) {
 		_, _ = fmt.Fscanf(r, "%d", &dhOp)
 		switch dhOp {
 		case 1:
-			preDeHamming7(fixErrors)
+			preDeHamming(7, fixErrors)
 		case 2:
 			preDeHamming(32, fixErrors)
 		case 3:
@@ -41,37 +41,64 @@ func DeHamming(fixErrors bool) {
 	}
 }
 
-func preDeHamming7(fixErrors bool) {
+func preDeHamming(size int, fixErrors bool) {
 	var fileName string
 	var body []byte
 	var err error
 	var start time.Time
 	r := bufio.NewReader(os.Stdin)
-
 	clearScreen()
-	fmt.Println("Ingrese el nombre del archivo .ha1")
+	var hammingCase string
+	switch size {
+	case 7:
+		hammingCase = "1"
+	case 32:
+		hammingCase = "2"
+	case 1024:
+		hammingCase = "3"
+	case 32768:
+		hammingCase = "4"
+	}
+	fmt.Println("Ingrese el nombre del archivo .ha" + hammingCase + " o .he" + hammingCase + " con extension")
 	_, _ = fmt.Fscanf(r, "%s", &fileName)
-
-	fileName += ".ha1"
-
-	body, err = loadFile(fileName)
-
-	if err != nil {
-		fmt.Println(err)
+	extension := strings.Split(fileName, ".")
+	if len(extension) >= 2 && (extension[1] == ("ha"+hammingCase) || extension[1] == ("he"+hammingCase)) {
+		body, err = loadFile(fileName)
+		if err != nil {
+			fmt.Println(err)
+			_, _ = fmt.Fscanf(r, "%d")
+			_, _ = fmt.Fscanf(r, "%d")
+			return
+		}
+		start = time.Now()
+		var decodedFile []byte
+		if len(body) == 0 {
+			decodedFile = []byte{}
+		} else {
+			if size == 7 {
+				decodedFile = deHamming7(body, fixErrors)
+			} else {
+				decodedFile = callDecode(size, body, fixErrors)
+			}
+		}
+		if fixErrors {
+			fileName = strings.Replace(fileName, "."+extension[1], ".dh"+hammingCase, -1)
+		} else {
+			fileName = strings.Replace(fileName, "."+extension[1], ".de"+hammingCase, -1)
+		}
+		err = saveFile(fileName, decodedFile)
+		if err != nil {
+			fmt.Println(err)
+		}
+		elapsed := time.Since(start)
+		log.Printf("\nDeHamming took %s", elapsed)
+		_, _ = fmt.Scanf("%s")
+	} else {
+		fmt.Println("La extension del archivo no es válida.")
 		_, _ = fmt.Fscanf(r, "%s")
 		_, _ = fmt.Fscanf(r, "%s")
 		return
 	}
-	start = time.Now()
-	decodedFile := deHamming7(body, fixErrors)
-	fileName = strings.Replace(fileName, ".ha1", ".deh", -1)
-	err = saveFile(fileName, decodedFile)
-	if err != nil {
-		fmt.Println(err)
-	}
-	elapsed := time.Since(start)
-	log.Printf("\nDeHamming7 took %s", elapsed)
-	_, _ = fmt.Scanf("%s")
 }
 
 func deHamming7(file []byte, fixErrors bool) (ret []byte) {
@@ -189,59 +216,12 @@ func correct(bait byte, syndrome byte) (corrected byte) {
 	return corrected
 }
 
-func preDeHamming(size int, fixErrors bool) {
-	var fileName string
-	var body []byte
-	var err error
-	var start time.Time
-	r := bufio.NewReader(os.Stdin)
-	clearScreen()
-	var format string
-	switch size {
-	case 32:
-		format = "2"
-	case 1024:
-		format = "3"
-	case 32768:
-		format = "4"
-
-	}
-	fmt.Println("Ingrese el nombre del archivo .ha" + format)
-	_, _ = fmt.Fscanf(r, "%s", &fileName)
-
-	fileName += ".ha" + format
-
-	body, err = loadFile(fileName)
-
-	if err != nil {
-		fmt.Println(err)
-		_, _ = fmt.Fscanf(r, "%d")
-		_, _ = fmt.Fscanf(r, "%d")
-		return
-	}
-
-	start = time.Now()
-	var decodedFile []byte
-	if len(body) == 0 {
-		decodedFile = []byte{}
-	} else {
-		decodedFile = callDecode(size, body, fixErrors)
-	}
-	fileName = strings.Replace(fileName, ".ha"+format, ".deh", -1)
-	err = saveFile(fileName, decodedFile)
-	if err != nil {
-		fmt.Println(err)
-	}
-	elapsed := time.Since(start)
-	log.Printf("\nDeHamming took %s", elapsed)
-	_, _ = fmt.Scanf("%s")
-}
-
 //Check errors, invoke to the function decode for decoding all the input file and finally compress the result when it's necessary (32 and  1024 bits)
 func callDecode(size int, input []byte, fixErrors bool) []byte {
 	var decodedFile []byte
 	_, _, controlBitsQuantity := initialCase(size)
 	blockSize := size / 8
+	blockSizeReturn := int(math.Ceil(float64(size-controlBitsQuantity) / 8))
 	il := 0
 	sl := blockSize
 	//For every block of 32, 1024 or 32768 bits check errors and then decode it
@@ -266,7 +246,7 @@ func callDecode(size int, input []byte, fixErrors bool) []byte {
 	case 32768:
 		ret = decodedFile
 	}
-	zeroQuantity := howManyZeros(ret[len(ret)-blockSize:])
+	zeroQuantity := howManyZeros(ret[len(ret)-blockSizeReturn:])
 	return ret[:len(ret)-zeroQuantity]
 }
 
