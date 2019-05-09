@@ -180,9 +180,9 @@ func encode(body []byte, code []string) (ret []byte, dic []byte) {
 				length += lengthI
 			} else {
 				//Save the part that fits in the byte
-				firstPart := codeJ & ((exp(byte(length)) - 1) << uint(8-length))
+				firstPart := codeJ & ((exp(byte(length)) - 1) << uint(length))
 				//Save the part that does not fit in the byte
-				secondPart := codeJ & (exp(byte(8-length)) - 1)
+				secondPart := codeJ & (exp(byte(length)) - 1)
 				//Complete the byte
 				tempCode = tempCode | (firstPart >> uint(length))
 				//Save the completed byte to the ret structure
