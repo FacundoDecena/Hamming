@@ -22,7 +22,7 @@ func saveFile(fileName string, body []byte) error {
 }
 
 func seeSize() {
-	extensions := []string{".txt", ".ha1", ".ha2", ".ha3", ".ha4"}
+	extensions := []string{".txt", ".ha1", ".ha2", ".ha3", ".ha4", ".huf"}
 	var fileName string
 	r := bufio.NewReader(os.Stdin)
 
@@ -46,7 +46,8 @@ func seeSize() {
 			case ".ha4":
 				fmt.Print("\n\n hamming 32"+
 					"768 tiene un tamaño de: ", len(body), " Bytes ", " o ", len(body)/1024, " KB")
-
+			case ".huf":
+				fmt.Print("\n\n huffman tiene un tamaño de: ", len(body), " Bytes ", " o ", len(body)/1024, " KB")
 			}
 
 		}
