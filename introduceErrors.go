@@ -190,6 +190,7 @@ func randomErrors(input []byte, kind int) (ret []byte) {
 		wom := bait & (255 - mask)
 		bait = wom | target
 		input[targetedByte] = bait
+		ret = input
 	}
 	return input
 }
