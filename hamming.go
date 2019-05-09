@@ -47,7 +47,7 @@ func preHamming(size int) {
 	var encodedBody []byte
 	r := bufio.NewReader(os.Stdin)
 	clearScreen()
-	fmt.Println("Ingrese el nombre del archivo")
+	fmt.Println("Ingrese el nombre del archivo con extensión.")
 	_, _ = fmt.Fscanf(r, "%s", &fileName)
 	//Since golang does not show the time a program runs...
 	start := time.Now()

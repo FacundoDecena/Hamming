@@ -14,20 +14,18 @@ func IntroduceErrors() {
 	var body, fileWithErrors []byte
 	var err error
 	r := bufio.NewReader(os.Stdin)
-
 	clearScreen()
-	fmt.Println("Ingrese el nombre del archivo a introducir errores CON EXTENCION")
+	fmt.Println("Ingrese el nombre del archivo a introducir errores extension:")
 	_, _ = fmt.Fscanf(r, "%s", &fileName)
 	//Clean buffer
 	_, _ = fmt.Fscanf(r, "%s")
-
 	body, err = loadFile(fileName)
 	if err != nil {
 		fmt.Println(err)
 		_, _ = fmt.Fscanf(r, "%s")
 		return
 	}
-	//Split the string between name and extention
+	//Split the string between name and extension
 	extension := strings.Split(fileName, ".")
 	switch extension[1] {
 	case "ha1":
@@ -39,14 +37,13 @@ func IntroduceErrors() {
 	case "ha4":
 		fileWithErrors = insertError(body, 32768)
 	default:
-		fmt.Println("La extension del archivo no es válida")
+		fmt.Println("La extension del archivo no es válida.")
 		_, _ = fmt.Fscanf(r, "%s")
 		return
 	}
-
+	_ = saveFile(strings.Replace(fileName, ".ha", ".he", -1), fileWithErrors)
 	fmt.Println("Se han introducido errores de manera correcta.")
 	_, _ = fmt.Fscanf(r, "%s")
-	_ = saveFile(fileName, fileWithErrors)
 }
 
 func insertError7(file []byte) (ret []byte) {
