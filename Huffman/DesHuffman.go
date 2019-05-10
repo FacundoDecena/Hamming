@@ -41,28 +41,34 @@ func deshuffman(bodyCoded []byte, fileName string) (originalBody [](byte)) {
 	var result byte
 	var numberOfShift int
 	var length int
+	var bitsTakenFromAByte int
 
 	for index := 0; index < len(bodyCoded); index++ {
 		bait := bodyCoded[index]
-		numberOfShift++
 		for count := 0; count < 8; count++ {
-			mask := doMask(count + 1)
+			bitsTakenFromAByte++
+			mask := doMask(bitsTakenFromAByte)
 			baitAux := bait & mask
-			valor := uint(8 * (4 - (numberOfShift)))
+			baitAux = baitAux << uint(bitsTakenFromAByte-1)
+			valor := uint(24 - numberOfShift)
 			entero := uint32(baitAux)
 			integer |= entero << valor // 24 or 16 or 8 or 0
 			length++
+			numberOfShift++
 			if diccionary[integer].Length == length {
 				if diccionary[integer].Caracter != 0 {
 					// Element found.
 					result = diccionary[integer].Caracter
 					originalBody = append(originalBody, result)
+					bait = bait << uint(bitsTakenFromAByte)
+					bitsTakenFromAByte = 0
 					integer = 0
 					length = 0
 					numberOfShift = 0
 				}
 			}
 		}
+		bitsTakenFromAByte = 0
 
 	}
 	return originalBody
