@@ -279,7 +279,7 @@ func saveFile(fileName string, body []byte) error {
 	return ioutil.WriteFile(fileName, body, 0600)
 }
 
-//takeButsDeHamming
+//takeBitsHuffman
 //
 //bits is the amount of bits you need.
 //input is the original byte slice. An extra byte is required
