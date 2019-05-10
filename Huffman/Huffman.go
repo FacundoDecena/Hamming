@@ -65,8 +65,8 @@ func callHuffman() {
 		var listItems []*TreeNode
 		var priorityQueue PriorityQueue
 		var code []string
-		var table [256]int
 
+		table := make(map[byte]int)
 		table = frequncies(body)
 		listItems = toItems(table)
 		priorityQueue = makeParva(listItems)
@@ -118,14 +118,13 @@ func huffman(parva PriorityQueue) (codification []string) {
 }
 
 // This function take the map (table of frequencies) and make de list of tree nodes.
-func toItems(table [256]int) (list []*TreeNode) {
+func toItems(table map[byte]int) (list []*TreeNode) {
 
-	for index := 0; index < len(table); index++ {
-
+	for key, value := range table {
 		var newItem Item
 		var newTreeNode *TreeNode
-		newItem.Symbol = uint8(index)
-		newItem.Weight = table[index]
+		newItem.Symbol = key
+		newItem.Weight = value
 		newTreeNode, _ = newTreeNode.New(newItem)
 
 		list = append(list, newTreeNode)
@@ -189,8 +188,8 @@ func encode(body []byte, code []string) (ret []byte, dic []byte) {
 				//Save the completed byte to the ret structure
 				ret = append(ret, tempCode)
 				//Take the part that did not fit the byte
-				tempCode = secondPart
-				length = 8 - length - lengthI
+				tempCode = secondPart << uint(8-length)
+				length = length + lengthI - 8
 			}
 		}
 	}
