@@ -30,6 +30,13 @@ func callDeshuffman() {
 		ret = deshuffman(body, fileName+".dic")
 
 		fmt.Printf("el texto es: %c\n\n", ret)
+
+		fileName2 := fileName + ".dhu"
+		err = saveFile(fileName2, ret)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 	}
 }
 
