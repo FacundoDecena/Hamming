@@ -121,6 +121,9 @@ func toItems(table [256]int) (list []*TreeNode) {
 
 	for index := 0; index < len(table); index++ {
 
+		if table[index] == 0 {
+			continue
+		}
 		var newItem Item
 		var newTreeNode *TreeNode
 		newItem.Symbol = uint8(index)
@@ -215,18 +218,11 @@ func toMap(table []string) map[byte]CAL {
 		//Split the substrings
 		fields := strings.Split(table[i], "@@")
 
-		//strings.Fields separates the strings using white spaces, ignores the quantity
-		//If the symbol is a white strings.Fields ignores it and we do not like that
-		if len(fields) == 1 {
-			symbolString = " "
-			codificationString = fields[0]
-		} else {
-			//First string is the symbol
-			symbolString = fields[1]
+		//First string is the symbol's codification
+		codificationString = fields[0]
 
-			//The rest is the symbol's codification
-			codificationString = fields[0]
-		}
+		//The rest is the symbol
+		symbolString = fields[1]
 
 		//Parse the strings to int
 		codification64, _ := strconv.ParseInt(codificationString, 2, 32)
