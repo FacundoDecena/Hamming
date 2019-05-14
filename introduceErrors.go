@@ -61,7 +61,7 @@ func insertError7(file []byte) (ret []byte) {
 		encoded1stByte = bitsToSpare | encoded1stByte
 		//Append decoded half to decodedByte
 		errored1stByte = randomErrors7(encoded1stByte)
-		//Save bits that does not belong to the hamming block
+		//Save bits that does not belong to the PracticoDeMaquina block
 		bitsToSpare = file[i] & (byte(exp(j+1)) - 1)
 		j++
 		if j%7 == 0 && i > 0 {
@@ -75,13 +75,13 @@ func insertError7(file []byte) (ret []byte) {
 			ret = append(ret, errored1stByte)
 			//Move bits to their place
 			bitsToSpare = bitsToSpare << (8 - j)
-			//Select second hamming block
+			//Select second PracticoDeMaquina block
 			encoded2ndByte = file[i+1] & (two55 << (j + 1))
 			//Move the slice of block to its position
 			encoded2ndByte = encoded2ndByte >> (j)
-			//Append bits to spare and the bits that belongs to the second hamming block
+			//Append bits to spare and the bits that belongs to the second PracticoDeMaquina block
 			encoded2ndByte = bitsToSpare | encoded2ndByte
-			//Save bits that does not belong to the hamming block for the next iteration
+			//Save bits that does not belong to the PracticoDeMaquina block for the next iteration
 			bitsToSpare = file[i+1] & (byte(exp(j+1)) - 1)
 			//Append 2nd decoded half to decodedByte
 			errored2ndByte = randomErrors7(encoded2ndByte)
@@ -192,13 +192,13 @@ func randomErrors(input []byte, kind int) (ret []byte) {
 	return input
 }
 
-//takeBlocks returns separated hamming blocks
+//takeBlocks returns separated PracticoDeMaquina blocks
 //
 //input is the file
 //
-//kind is the type of hamming (32, 1024, 32768)
+//kind is the type of PracticoDeMaquina (32, 1024, 32768)
 //
-//return an array with hamming blocks with size kind
+//return an array with PracticoDeMaquina blocks with size kind
 func takeBlocks(input []byte, kind int) (ret [][]byte) {
 	var length, blockSize int
 	length = len(input)

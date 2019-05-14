@@ -16,7 +16,7 @@ func DeHamming(fixErrors bool) {
 	dhContinue_ := true
 	for dhContinue_ {
 		clearScreen()
-		fmt.Println("¿Que tipo de hamming ha sido aplicado?")
+		fmt.Println("¿Que tipo de PracticoDeMaquina ha sido aplicado?")
 		fmt.Println("1 - Hamming 7")
 		fmt.Println("2 - Hamming 32")
 		fmt.Println("3 - Hamming 1024")
@@ -118,7 +118,7 @@ func deHamming7(file []byte, fixErrors bool) (ret []byte) {
 		encoded1stByte >>= 1
 		//Append decoded half to decodedByte
 		decoded1stByte = decode7(encoded1stByte, fixErrors) << 4
-		//Save bits that does not belong to the hamming block
+		//Save bits that does not belong to the PracticoDeMaquina block
 		bitsToSpare = file[i] & (exp(j+1) - 1)
 		j++
 		if j%7 == 0 && i > 0 {
@@ -130,14 +130,14 @@ func deHamming7(file []byte, fixErrors bool) (ret []byte) {
 		} else {
 			//Move bits to their place
 			bitsToSpare = bitsToSpare << (8 - j)
-			//Select second hamming block
+			//Select second PracticoDeMaquina block
 			encoded2ndByte = file[i+1] & (two55 << (j + 1))
 			//Move the slice of block to its position
 			encoded2ndByte = encoded2ndByte >> (j)
-			//Append bits to spare and the bits that belongs to the second hamming block
+			//Append bits to spare and the bits that belongs to the second PracticoDeMaquina block
 			encoded2ndByte = bitsToSpare | encoded2ndByte
 			encoded2ndByte >>= 1
-			//Save bits that does not belong to the hamming block for the next iteration
+			//Save bits that does not belong to the PracticoDeMaquina block for the next iteration
 			bitsToSpare = file[i+1] & (exp(j+1) - 1)
 			//Append 2nd decoded half to decodedByte
 			decoded2ndByte = decode7(encoded2ndByte, fixErrors)
@@ -194,7 +194,7 @@ func decode7(bait byte, fixErrors bool) (s byte) {
 
 //correct Corrects the bit containing the error.
 //
-// bait: The hamming block for hamming 7. Extra 0 is assume to be at the right.
+// bait: The PracticoDeMaquina block for PracticoDeMaquina 7. Extra 0 is assume to be at the right.
 //
 // syndrome : Position (left to right) where the mistake is.
 //
@@ -250,12 +250,12 @@ func callDecode(size int, input []byte, fixErrors bool) []byte {
 	return ret[:len(ret)-zeroQuantity]
 }
 
-//Take the data bits from the hamming block of 32,1024 and 32768 bits
+//Take the data bits from the PracticoDeMaquina block of 32,1024 and 32768 bits
 func decode(size int, input []byte, controlBitsQuantity int) []byte {
 	decoded := make([]byte, int(math.Ceil((float64(size)-float64(controlBitsQuantity))/8)))
 	//Take control of the position of the bit who is being seeing by the function
 	decodedPosition := 0
-	//Take control of the byte of the hamming block who is being seeing by the function
+	//Take control of the byte of the PracticoDeMaquina block who is being seeing by the function
 	decodedNumberOfByte := 0
 	for i := 0; i < controlBitsQuantity-1; i++ {
 		//Position of the lower control bit (inferior limit)

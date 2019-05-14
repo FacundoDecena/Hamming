@@ -16,7 +16,7 @@ func Hamming() {
 	dhContinue_ := true
 	for dhContinue_ {
 		clearScreen()
-		fmt.Println("¿Que tipo de hamming quiere aplicar?")
+		fmt.Println("¿Que tipo de PracticoDeMaquina quiere aplicar?")
 		fmt.Println("1 - Hamming 7")
 		fmt.Println("2 - Hamming 32")
 		fmt.Println("3 - Hamming 1024")
@@ -112,7 +112,7 @@ func hamming7(file []byte) []byte {
 	auxLength := 2*entryLength + module
 	finalLength := int(math.Ceil(float64(entryLength) * 1.75))
 	var auxArray = make([]byte, auxLength)
-	//Applies the hamming encode to each byte of the file
+	//Applies the PracticoDeMaquina encode to each byte of the file
 	for i := 0; i < entryLength; i++ {
 		var firstBits, lastBits byte
 		firstBits = (file[i] & uint8(mask1)) >> 4
@@ -243,7 +243,7 @@ func callEncode(size int, inputFile [][]byte) (outPut []byte) {
 	return outPut
 }
 
-//Size should be: 8 for hamming7, 32 for hamming 32, 1024 for hamming 1024 and 32768 for hamming 32768
+//Size should be: 8 for hamming7, 32 for PracticoDeMaquina 32, 1024 for PracticoDeMaquina 1024 and 32768 for PracticoDeMaquina 32768
 func encode(size int, input []byte, position int, numberOfByte int, controlBitsQuantity int) []byte {
 	encoded := make([]byte, int(size/8))
 	//Data bits accommodate process
@@ -314,7 +314,7 @@ func expInt(exponent int) int {
 }
 
 func initialCase(size int) (position int, numberOfByte int, controlBitsQuantity int) {
-	//Set the initial position where is the first information bit in the array passed by parameter depending of what hamming will be apply
+	//Set the initial position where is the first information bit in the array passed by parameter depending of what PracticoDeMaquina will be apply
 	switch size {
 	case 32:
 		position = 6
