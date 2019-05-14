@@ -1,7 +1,6 @@
 package main
 
 import (
-	// "Hamming/Huffman"
 	"bufio"
 	"fmt"
 	"github.com/facundodecena/PracticoDeMaquina/HammingCodification"
@@ -53,7 +52,7 @@ func Hamming() {
 	dhContinue_ := true
 	for dhContinue_ {
 		clearScreen()
-		fmt.Println("¿Que tipo de PracticoDeMaquina quiere aplicar?")
+		fmt.Println("¿Que tipo de Hamming quiere aplicar?")
 		fmt.Println("1 - Hamming 7")
 		fmt.Println("2 - Hamming 32")
 		fmt.Println("3 - Hamming 1024")
@@ -140,7 +139,7 @@ func DeHamming(fixErrors bool) {
 	dhContinue_ := true
 	for dhContinue_ {
 		clearScreen()
-		fmt.Println("¿Que tipo de PracticoDeMaquina ha sido aplicado?")
+		fmt.Println("¿Que tipo de Hamming ha sido aplicado?")
 		fmt.Println("1 - Hamming 7")
 		fmt.Println("2 - Hamming 32")
 		fmt.Println("3 - Hamming 1024")
