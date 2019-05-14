@@ -1,7 +1,7 @@
 package main
 
 import (
-	"Hamming/Huffman"
+	// "Hamming/Huffman"
 	"bufio"
 	"fmt"
 	"github.com/FacundoDecena/Hamming/Huffman"
