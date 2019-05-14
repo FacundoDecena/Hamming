@@ -1,104 +1,11 @@
-package main
+package HammingCodification
 
 import (
-	"bufio"
-	"fmt"
-	"log"
 	"math"
-	"os"
-	"strings"
-	"time"
 )
 
-func Hamming() {
-	var dhOp int
-	r := bufio.NewReader(os.Stdin)
-	dhContinue_ := true
-	for dhContinue_ {
-		clearScreen()
-		fmt.Println("¿Que tipo de PracticoDeMaquina quiere aplicar?")
-		fmt.Println("1 - Hamming 7")
-		fmt.Println("2 - Hamming 32")
-		fmt.Println("3 - Hamming 1024")
-		fmt.Println("4 - Hamming 32768")
-		fmt.Println("5 - Volver")
-		fmt.Printf("Su opcion: ")
-		dhOp = 0
-		_, _ = fmt.Fscanf(r, "%d", &dhOp)
-		switch dhOp {
-		case 1:
-			preHamming(7)
-		case 2:
-			preHamming(32)
-		case 3:
-			preHamming(1024)
-		case 4:
-			preHamming(32768)
-		case 5:
-			dhContinue_ = false
-		}
-		_, _ = fmt.Fscanf(r, "%d")
-	}
-
-}
-
-func preHamming(size int) {
-	var fileName string
-	var encodedBody []byte
-	r := bufio.NewReader(os.Stdin)
-	clearScreen()
-	fmt.Println("Ingrese el nombre del archivo con extensión.")
-	_, _ = fmt.Fscanf(r, "%s", &fileName)
-	//Since golang does not show the time a program runs...
-	start := time.Now()
-	body, err := loadFile(fileName)
-	var fileType string
-	if err != nil {
-		fmt.Println(err)
-		_, _ = fmt.Fscanf(r, "%s")
-		_, _ = fmt.Fscanf(r, "%s")
-		return
-	} else {
-		switch size {
-		case 7:
-			fileType = ".ha1"
-		case 32:
-			fileType = ".ha2"
-		case 1024:
-			fileType = ".ha3"
-		case 32768:
-			fileType = ".ha4"
-		}
-		start = time.Now()
-		if len(body) == 0 {
-			encodedBody = []byte{}
-		} else {
-			switch size {
-			case 7:
-				encodedBody = hamming7(body)
-			case 32:
-				encodedBody = hamming(size, body)
-			case 1024:
-				encodedBody = hamming(size, body)
-			case 32768:
-				encodedBody = hamming(size, body)
-			}
-		}
-		fileName = strings.Replace(fileName, ".txt", fileType, -1)
-		err = saveFile(fileName, encodedBody)
-		if err != nil {
-			fmt.Println(err)
-		}
-
-	}
-	elapsed := time.Since(start)
-	log.Printf("\nHamming took %s", elapsed)
-	_, _ = fmt.Fscanf(r, "%s")
-	_, _ = fmt.Fscanf(r, "%s")
-}
-
 // Receives a byte slice, returns it encoded
-func hamming7(file []byte) []byte {
+func Hamming7(file []byte) []byte {
 	//Mask that shows first bits
 	mask1 := 240
 	//Mask that shows last bits
@@ -177,7 +84,7 @@ func compressBlock(bp []byte) [7]byte {
 	return ba
 }
 
-func hamming(size int, file []byte) []byte {
+func Hamming(size int, file []byte) []byte {
 	var ret []byte
 	switch size {
 	case 32:

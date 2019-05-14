@@ -1,107 +1,10 @@
-package main
+package HammingCodification
 
 import (
-	"bufio"
-	"fmt"
-	"log"
 	"math"
-	"os"
-	"strings"
-	"time"
 )
 
-func DeHamming(fixErrors bool) {
-	var dhOp int
-	r := bufio.NewReader(os.Stdin)
-	dhContinue_ := true
-	for dhContinue_ {
-		clearScreen()
-		fmt.Println("¿Que tipo de PracticoDeMaquina ha sido aplicado?")
-		fmt.Println("1 - Hamming 7")
-		fmt.Println("2 - Hamming 32")
-		fmt.Println("3 - Hamming 1024")
-		fmt.Println("4 - Hamming 32768")
-		fmt.Println("5 - Volver")
-		fmt.Printf("Su opcion: ")
-		dhOp = 0
-		_, _ = fmt.Fscanf(r, "%d", &dhOp)
-		switch dhOp {
-		case 1:
-			preDeHamming(7, fixErrors)
-		case 2:
-			preDeHamming(32, fixErrors)
-		case 3:
-			preDeHamming(1024, fixErrors)
-		case 4:
-			preDeHamming(32768, fixErrors)
-		case 5:
-			dhContinue_ = false
-		}
-		_, _ = fmt.Fscanf(r, "%d")
-	}
-}
-
-func preDeHamming(size int, fixErrors bool) {
-	var fileName string
-	var body []byte
-	var err error
-	var start time.Time
-	r := bufio.NewReader(os.Stdin)
-	clearScreen()
-	var hammingCase string
-	switch size {
-	case 7:
-		hammingCase = "1"
-	case 32:
-		hammingCase = "2"
-	case 1024:
-		hammingCase = "3"
-	case 32768:
-		hammingCase = "4"
-	}
-	fmt.Println("Ingrese el nombre del archivo .ha" + hammingCase + " o .he" + hammingCase + " con extension")
-	_, _ = fmt.Fscanf(r, "%s", &fileName)
-	extension := strings.Split(fileName, ".")
-	if len(extension) >= 2 && (extension[1] == ("ha"+hammingCase) || extension[1] == ("he"+hammingCase)) {
-		body, err = loadFile(fileName)
-		if err != nil {
-			fmt.Println(err)
-			_, _ = fmt.Fscanf(r, "%d")
-			_, _ = fmt.Fscanf(r, "%d")
-			return
-		}
-		start = time.Now()
-		var decodedFile []byte
-		if len(body) == 0 {
-			decodedFile = []byte{}
-		} else {
-			if size == 7 {
-				decodedFile = deHamming7(body, fixErrors)
-			} else {
-				decodedFile = callDecode(size, body, fixErrors)
-			}
-		}
-		if fixErrors {
-			fileName = strings.Replace(fileName, "."+extension[1], ".dh"+hammingCase, -1)
-		} else {
-			fileName = strings.Replace(fileName, "."+extension[1], ".de"+hammingCase, -1)
-		}
-		err = saveFile(fileName, decodedFile)
-		if err != nil {
-			fmt.Println(err)
-		}
-		elapsed := time.Since(start)
-		log.Printf("\nDeHamming took %s", elapsed)
-		_, _ = fmt.Scanf("%s")
-	} else {
-		fmt.Println("La extension del archivo no es válida.")
-		_, _ = fmt.Fscanf(r, "%s")
-		_, _ = fmt.Fscanf(r, "%s")
-		return
-	}
-}
-
-func deHamming7(file []byte, fixErrors bool) (ret []byte) {
+func DeHamming7(file []byte, fixErrors bool) (ret []byte) {
 	var encoded1stByte, encoded2ndByte, bitsToSpare, decoded1stByte, decoded2ndByte, decodedByte byte
 	bitsToSpare = 0
 	two55 := exp(8) - 1 // 255
@@ -217,7 +120,7 @@ func correct(bait byte, syndrome byte) (corrected byte) {
 }
 
 //Check errors, invoke to the function decode for decoding all the input file and finally compress the result when it's necessary (32 and  1024 bits)
-func callDecode(size int, input []byte, fixErrors bool) []byte {
+func CallDecode(size int, input []byte, fixErrors bool) []byte {
 	var decodedFile []byte
 	_, _, controlBitsQuantity := initialCase(size)
 	blockSize := size / 8

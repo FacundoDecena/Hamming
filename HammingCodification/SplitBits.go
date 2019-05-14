@@ -1,4 +1,4 @@
-package main
+package HammingCodification
 
 import (
 	"fmt"
