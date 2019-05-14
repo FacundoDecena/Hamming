@@ -25,7 +25,7 @@ func callDeshuffman() {
 	if err != nil {
 		fmt.Println(err)
 	} else {
-		fmt.Printf("El texto comprimido es : %c \n", body)
+		fmt.Printf("El texto comprimido es : %b \n", body)
 
 		ret = deshuffman(body, fileName+".dic")
 
@@ -103,9 +103,9 @@ func stractTable(fileName string) map[uint32]Aux {
 			arrByte = append(arrByte, body[index+3])
 			arrByte = append(arrByte, body[index+4])
 			code = (uint32(arrByte[0]) << 24) + (uint32(arrByte[1]) << 16) + (uint32(arrByte[2]) << 8) + uint32(arrByte[3])
-			fmt.Printf("codificacion del elemento de la tabla %32b\n", code)
 			// making the table.
 			aux.Length = int(body[index+5])
+			fmt.Printf("codificacion del elemento de la tabla %c con longitud %d %32b\n", aux.Caracter, aux.Length, code)
 			diccionary[code] = aux
 			arrByte = nil
 		}
