@@ -66,8 +66,7 @@ func callHuffman() {
 		var priorityQueue PriorityQueue
 		var code []string
 
-		table := make(map[byte]int)
-		table = frequncies(body)
+		table := frequncies(body)
 		listItems = toItems(table)
 		priorityQueue = makeParva(listItems)
 
@@ -118,13 +117,14 @@ func huffman(parva PriorityQueue) (codification []string) {
 }
 
 // This function take the map (table of frequencies) and make de list of tree nodes.
-func toItems(table map[byte]int) (list []*TreeNode) {
+func toItems(table [256]int) (list []*TreeNode) {
 
-	for key, value := range table {
+	for index := 0; index < len(table); index++ {
+
 		var newItem Item
 		var newTreeNode *TreeNode
-		newItem.Symbol = key
-		newItem.Weight = value
+		newItem.Symbol = uint8(index)
+		newItem.Weight = table[index]
 		newTreeNode, _ = newTreeNode.New(newItem)
 
 		list = append(list, newTreeNode)
