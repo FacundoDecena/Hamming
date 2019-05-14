@@ -124,6 +124,7 @@ func toItems(table [256]int) (list []*TreeNode) {
 		if table[index] == 0 {
 			continue
 		}
+
 		var newItem Item
 		var newTreeNode *TreeNode
 		newItem.Symbol = uint8(index)
