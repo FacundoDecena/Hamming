@@ -73,8 +73,9 @@ func callHuffman() {
 		code = huffman(priorityQueue)
 
 		encodedBody, dictionary := encode(body, code)
-
-		fileName = strings.Replace(fileName, "txt", "huf", -1)
+		fileName = strings.Split(fileName, ".")[0]
+		//fileName = strings.Replace(fileName, "txt", "huf", -1)
+		fileName = fileName + ".huf"
 		err = saveFile(fileName, encodedBody)
 		if err != nil {
 			fmt.Println(err)
@@ -156,8 +157,32 @@ func encode(body []byte, code []string) (ret []byte, dic []byte) {
 	var table map[byte]CAL
 	var length int
 	var tempCode byte
+	var temp int
+	//bodyLength represents a int32
+	bodyLength := []byte{0, 0, 0, 0}
 	//var codification []byte
 	table = toMap(code)
+	//the x represents the bit I save in each case
+	// -------- -------- -------- xxxxxxxx
+	temp = len(body) & int(exp(8)-1)
+	bodyLength[3] = byte(temp)
+
+	// -------- -------- xxxxxxxx --------
+	temp = len(body) & (int(exp(8)-1) << 8)
+	temp >>= 8
+	bodyLength[2] = byte(temp)
+
+	//-------- xxxxxxxx -------- --------
+	temp = len(body) & (int(exp(8)-1) << 16)
+	temp >>= 16
+	bodyLength[1] = byte(temp)
+
+	//xxxxxxxx -------- -------- --------
+	temp = len(body) & (int(exp(8)-1) << 24)
+	temp >>= 24
+	bodyLength[0] = byte(temp)
+
+	dic = append(dic, bodyLength...)
 	for k, v := range table {
 		//Appends the key
 		dic = append(dic, k)
