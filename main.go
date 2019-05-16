@@ -3,8 +3,8 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/facundodecena/PracticoDeMaquina/HammingCodification"
-	"github.com/facundodecena/PracticoDeMaquina/Huffman"
+	"github.com/FacundoDecena/PracticoDeMaquinaTI2019/HammingCodification"
+	"github.com/FacundoDecena/PracticoDeMaquinaTI2019/Huffman"
 	"log"
 	"os"
 	"os/exec"
