@@ -66,16 +66,16 @@ func callHuffman() {
 		var priorityQueue PriorityQueue
 		var code []string
 
-		table := make(map[byte]int)
-		table = frequncies(body)
+		table := frequncies(body)
 		listItems = toItems(table)
 		priorityQueue = makeParva(listItems)
 
 		code = huffman(priorityQueue)
 
 		encodedBody, dictionary := encode(body, code)
-
-		fileName = strings.Replace(fileName, "txt", "huf", -1)
+		fileName = strings.Split(fileName, ".")[0]
+		//fileName = strings.Replace(fileName, "txt", "huf", -1)
+		fileName = fileName + ".huf"
 		err = saveFile(fileName, encodedBody)
 		if err != nil {
 			fmt.Println(err)
@@ -118,13 +118,18 @@ func huffman(parva PriorityQueue) (codification []string) {
 }
 
 // This function take the map (table of frequencies) and make de list of tree nodes.
-func toItems(table map[byte]int) (list []*TreeNode) {
+func toItems(table [256]int) (list []*TreeNode) {
 
-	for key, value := range table {
+	for index := 0; index < len(table); index++ {
+
+		if table[index] == 0 {
+			continue
+		}
+
 		var newItem Item
 		var newTreeNode *TreeNode
-		newItem.Symbol = key
-		newItem.Weight = value
+		newItem.Symbol = uint8(index)
+		newItem.Weight = table[index]
 		newTreeNode, _ = newTreeNode.New(newItem)
 
 		list = append(list, newTreeNode)
@@ -152,8 +157,32 @@ func encode(body []byte, code []string) (ret []byte, dic []byte) {
 	var table map[byte]CAL
 	var length int
 	var tempCode byte
+	var temp int
+	//bodyLength represents a int32
+	bodyLength := []byte{0, 0, 0, 0}
 	//var codification []byte
 	table = toMap(code)
+	//the x represents the bit I save in each case
+	// -------- -------- -------- xxxxxxxx
+	temp = len(body) & int(exp(8)-1)
+	bodyLength[3] = byte(temp)
+
+	// -------- -------- xxxxxxxx --------
+	temp = len(body) & (int(exp(8)-1) << 8)
+	temp >>= 8
+	bodyLength[2] = byte(temp)
+
+	//-------- xxxxxxxx -------- --------
+	temp = len(body) & (int(exp(8)-1) << 16)
+	temp >>= 16
+	bodyLength[1] = byte(temp)
+
+	//xxxxxxxx -------- -------- --------
+	temp = len(body) & (int(exp(8)-1) << 24)
+	temp >>= 24
+	bodyLength[0] = byte(temp)
+
+	dic = append(dic, bodyLength...)
 	for k, v := range table {
 		//Appends the key
 		dic = append(dic, k)
@@ -180,7 +209,7 @@ func encode(body []byte, code []string) (ret []byte, dic []byte) {
 				length += lengthI
 			} else {
 				//Save the part that fits in the byte
-				firstPart := codeJ & ((exp(byte(length)) - 1) << uint(length))
+				firstPart := codeJ & ((exp(byte(8-length)) - 1) << uint(length))
 				//Save the part that does not fit in the byte
 				secondPart := codeJ & (exp(byte(length)) - 1)
 				//Complete the byte
@@ -215,18 +244,11 @@ func toMap(table []string) map[byte]CAL {
 		//Split the substrings
 		fields := strings.Split(table[i], "@@")
 
-		//strings.Fields separates the strings using white spaces, ignores the quantity
-		//If the symbol is a white strings.Fields ignores it and we do not like that
-		if len(fields) == 1 {
-			symbolString = " "
-			codificationString = fields[0]
-		} else {
-			//First string is the symbol
-			symbolString = fields[1]
+		//First string is the symbol's codification
+		codificationString = fields[0]
 
-			//The rest is the symbol's codification
-			codificationString = fields[0]
-		}
+		//The rest is the symbol
+		symbolString = fields[1]
 
 		//Parse the strings to int
 		codification64, _ := strconv.ParseInt(codificationString, 2, 32)

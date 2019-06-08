@@ -121,7 +121,7 @@ func randomErrors7(bait byte) (ret byte) {
 	return ret
 }
 
-//randomErrors receives an array with a Hamming block and returns it with an error in it
+//randomErrors receives an array with a PracticoDeMaquinaTI2019 block and returns it with an error in it
 func randomErrors(input []byte, kind int) (ret []byte) {
 	if rand.Intn(2) == 0 { //Error does not correspond
 		ret = input

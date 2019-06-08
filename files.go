@@ -38,9 +38,9 @@ func seeSize() {
 			case ".txt":
 				fmt.Print("El archivo inicial tiene un tamaño de:", len(body), " Bytes ", " o ", (len(body))/1024, " KB")
 			case ".ha1":
-				fmt.Print("\n\n Hamming 7 tiene un tamaño de: ", len(body), " Bytes ", " o ", len(body)/1024, " KB")
+				fmt.Print("\n\n PracticoDeMaquinaTI2019 7 tiene un tamaño de: ", len(body), " Bytes ", " o ", len(body)/1024, " KB")
 			case ".ha2":
-				fmt.Print("\n\n Hamming 32 tiene un tamaño de: ", len(body), " Bytes ", " o ", len(body)/1024, " KB")
+				fmt.Print("\n\n PracticoDeMaquinaTI2019 32 tiene un tamaño de: ", len(body), " Bytes ", " o ", len(body)/1024, " KB")
 			case ".ha3":
 				fmt.Print("\n\n PracticoDeMaquina 1024 tiene un tamaño de: ", len(body), " Bytes ", " o ", len(body)/1024, " KB")
 			case ".ha4":
