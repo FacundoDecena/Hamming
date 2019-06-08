@@ -1,11 +1,10 @@
 package main
 
 import (
-	// "Hamming/Huffman"
+	"./HammingCodification"
+	"./Huffman"
 	"bufio"
 	"fmt"
-	"github.com/facundodecena/PracticoDeMaquina/HammingCodification"
-	"github.com/facundodecena/PracticoDeMaquina/Huffman"
 	"log"
 	"os"
 	"os/exec"
