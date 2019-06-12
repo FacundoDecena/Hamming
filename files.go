@@ -25,7 +25,6 @@ func seeSize() {
 	extensions := []string{".txt", ".ha1", ".ha2", ".ha3", ".ha4", ".huf"}
 	var fileName string
 	r := bufio.NewReader(os.Stdin)
-
 	fmt.Println("Ingrese el nombre del archivo SIN EXTENSION ")
 	_, _ = fmt.Fscanf(r, "%s", &fileName)
 

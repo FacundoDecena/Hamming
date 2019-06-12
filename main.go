@@ -1,10 +1,10 @@
 package main
 
 import (
+	"./HammingCodification"
+	"./Huffman"
 	"bufio"
 	"fmt"
-	"github.com/FacundoDecena/PracticoDeMaquinaTI2019/HammingCodification"
-	"github.com/FacundoDecena/PracticoDeMaquinaTI2019/Huffman"
 	"log"
 	"os"
 	"os/exec"
@@ -25,6 +25,7 @@ func main() {
 		fmt.Println("5 - Ver detalles de archivos")
 		fmt.Println("6 - Aplicar Huffman a un archivo")
 		fmt.Println("7 - Salir")
+		fmt.Println("8 - Testing")
 		mainOp = 0
 		_, _ = fmt.Fscanf(r, "%d", &mainOp)
 		switch mainOp {
@@ -42,6 +43,24 @@ func main() {
 			Huffman.Huffman()
 		case 7:
 			continue_ = false
+			/*case 8:
+			start:=time.Now()
+			bodyInicio,_ := loadFile("pdf.txt")
+			saveFile("test.ha4",HammingCodification.Hamming(32768, bodyInicio))
+			body,_ := loadFile("test.ha4")
+			saveFile("test.he4",HammingCodification.InsertError(body, 32768))
+			body,_ = loadFile("test.he4")
+			saveFile("test.dh4",HammingCodification.CallDecode(32768, body, true))
+			bodyFinal,_:= loadFile("test.dh4")
+			elapsed:=time.Since(start)
+			if(bytes.Compare(bodyInicio,bodyFinal)==0){
+				log.Println("Son iguales.")
+			} else{
+				log.Println("Son distintos.")
+			}
+			log.Print(elapsed)
+			_, _ = fmt.Fscanf(r, "%d")
+			_, _ = fmt.Fscanf(r, "%d")*/
 		}
 	}
 }
