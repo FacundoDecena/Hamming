@@ -5,6 +5,7 @@ import (
 	"./HuffmanCodification"
 	"bufio"
 	"fmt"
+	"github.com/pkg/errors"
 	"log"
 	"os"
 	"os/exec"
@@ -91,9 +92,7 @@ func Hamming() {
 		case 5:
 			dhContinue_ = false
 		}
-		_, _ = fmt.Fscanf(r, "%d")
 	}
-
 }
 
 func preHamming(size int) {
@@ -101,7 +100,12 @@ func preHamming(size int) {
 	var encodedBody []byte
 	r := bufio.NewReader(os.Stdin)
 	clearScreen()
-	unixDate := askDate()
+	unixDate, err := askDate()
+	if err != nil {
+		fmt.Print(err)
+		_, _ = fmt.Fscanf(r, "%s")
+		return
+	}
 	fmt.Println("Ingrese el nombre del archivo con extensión.")
 	_, _ = fmt.Fscanf(r, "%s", &fileName)
 	//Since golang does not show the time a program runs...
@@ -110,7 +114,6 @@ func preHamming(size int) {
 	var fileType string
 	if err != nil {
 		fmt.Println(err)
-		_, _ = fmt.Fscanf(r, "%s")
 		_, _ = fmt.Fscanf(r, "%s")
 		return
 	} else {
@@ -180,7 +183,6 @@ func DeHamming(fixErrors bool) {
 		case 5:
 			dhContinue_ = false
 		}
-		_, _ = fmt.Fscanf(r, "%d")
 	}
 }
 
@@ -285,6 +287,40 @@ func IntroduceErrors() {
 	_, _ = fmt.Fscanf(r, "%s")
 }
 
+func seeSize() {
+	extensions := []string{".txt", ".ha1", ".ha2", ".ha3", ".ha4", ".huf"}
+	var fileName string
+	r := bufio.NewReader(os.Stdin)
+	fmt.Println("Ingrese el nombre del archivo sin extension.")
+	_, _ = fmt.Fscanf(r, "%s", &fileName)
+
+	for index := 0; index < len(extensions); index++ {
+		body, err := loadFile(fileName+extensions[index], false)
+		if err != nil {
+			fmt.Print("\n\n ", err)
+		} else {
+			switch extensions[index] {
+			case ".txt":
+				fmt.Print(" El archivo inicial tiene un tamaño de:", len(body), " Bytes ", " o ", (len(body))/1024, " KB")
+			case ".ha1":
+				fmt.Print("\n\n Hamming 7 tiene un tamaño de: ", len(body), " Bytes ", " o ", len(body)/1024, " KB")
+			case ".ha2":
+				fmt.Print("\n\n Hamming 32 tiene un tamaño de: ", len(body), " Bytes ", " o ", len(body)/1024, " KB")
+			case ".ha3":
+				fmt.Print("\n\n Hamming 1024 tiene un tamaño de: ", len(body), " Bytes ", " o ", len(body)/1024, " KB")
+			case ".ha4":
+				fmt.Print("\n\n Hamming 32"+
+					"768 tiene un tamaño de: ", len(body), " Bytes ", " o ", len(body)/1024, " KB")
+			case ".huf":
+				fmt.Print("\n\n Huffman tiene un tamaño de: ", len(body), " Bytes ", " o ", len(body)/1024, " KB")
+			}
+		}
+	}
+	fmt.Println("\n\n Presione enter para continuar")
+	_, _ = fmt.Fscanf(r, "%s")
+	_, _ = fmt.Fscanf(r, "%s")
+}
+
 func Huffman() {
 	var mainOp int
 	r := bufio.NewReader(os.Stdin)
@@ -305,7 +341,6 @@ func Huffman() {
 		case 3:
 			continue_ = false
 		}
-		_, _ = fmt.Fscanf(r, "%s")
 	}
 }
 
@@ -313,7 +348,13 @@ func preHuffman() {
 	var fileName string
 	r := bufio.NewReader(os.Stdin)
 	clearScreen()
-	unixDate := askDate()
+	unixDate, err := askDate()
+	if err != nil {
+		fmt.Print(err)
+		_, _ = fmt.Fscanf(r, "%s")
+		_, _ = fmt.Fscanf(r, "%s")
+		return
+	}
 	fmt.Println("Ingrese el nombre del archivo con extension.")
 	_, _ = fmt.Fscanf(r, "%s", &fileName)
 	//Since golang does not show the time a program runs...
@@ -397,42 +438,53 @@ func clearScreen() {
 	fmt.Println()
 }
 
-func askDate() []byte {
+func askDate() ([]byte, error) {
 	//Ask for the date
 	r := bufio.NewReader(os.Stdin)
-	var day int
-	var auxMonth int
-	var year int
-	var hour int
-	var minutes int
-	var seconds int
+	var auxDay, auxMonth, auxYear, auxHour, auxMinutes, auxSeconds string
+	var day, month, year, hour, minutes, seconds int
+	err := make([]error, 6)
 	fmt.Println("Ingrese la dia, mes, año, hora, minutos y segundos en los que quiere la decodificacin del archivo este disponible:")
 	fmt.Print("Dia: ")
-	_, _ = fmt.Fscanf(r, "%d", &day)
+	_, _ = fmt.Fscanf(r, "%s", &auxDay)
 	_, _ = fmt.Fscanf(r, "%d")
 	fmt.Print("Mes: ")
-	_, _ = fmt.Fscanf(r, "%d", &auxMonth)
+	_, _ = fmt.Fscanf(r, "%s", &auxMonth)
 	_, _ = fmt.Fscanf(r, "%d")
 	fmt.Print("Año: ")
-	_, _ = fmt.Fscanf(r, "%d", &year)
+	_, _ = fmt.Fscanf(r, "%s", &auxYear)
 	_, _ = fmt.Fscanf(r, "%d")
 	fmt.Print("Hora: ")
-	_, _ = fmt.Fscanf(r, "%d", &hour)
+	_, _ = fmt.Fscanf(r, "%s", &auxHour)
 	_, _ = fmt.Fscanf(r, "%d")
 	fmt.Print("Minutos: ")
-	_, _ = fmt.Fscanf(r, "%d", &minutes)
+	_, _ = fmt.Fscanf(r, "%s", &auxMinutes)
 	_, _ = fmt.Fscanf(r, "%d")
 	fmt.Print("Segundos: ")
-	_, _ = fmt.Fscanf(r, "%d", &seconds)
+	_, _ = fmt.Fscanf(r, "%s", &auxSeconds)
 	_, _ = fmt.Fscanf(r, "%d")
-	month := time.Month(auxMonth)
+	//Searching errors process
+	day, err[0] = strconv.Atoi(auxDay)
+	month, err[1] = strconv.Atoi(auxMonth)
+	year, err[2] = strconv.Atoi(auxYear)
+	hour, err[3] = strconv.Atoi(auxHour)
+	minutes, err[4] = strconv.Atoi(auxMinutes)
+	seconds, err[5] = strconv.Atoi(auxSeconds)
+	//Check if the date have errors
+	for i := 0; i < len(err); i++ {
+		if err[i] != nil {
+			return nil, errors.New("Formato de fecha incorrecto.")
+		}
+	}
+	//No error found then create the date
+	parseMonth := time.Month(month)
 	location, _ := time.LoadLocation("America/Argentina/Cordoba")
-	auxDate := time.Date(year, month, day, hour, minutes, seconds, 0, location)
+	auxDate := time.Date(year, parseMonth, day, hour, minutes, seconds, 0, location)
 	auxUnixDate := auxDate.Unix()
 	s := []byte(strconv.FormatInt(auxUnixDate, 10))
 	unixDate := []byte(s)
 	for i := len(unixDate); i < 10; i = len(unixDate) {
 		unixDate = append([]byte{48}, unixDate...)
 	}
-	return unixDate
+	return unixDate, nil
 }

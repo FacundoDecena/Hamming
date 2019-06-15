@@ -158,7 +158,7 @@ func callEncode(size int, inputFile [][]byte, lenFile int) (outPut []byte) {
 	return outPut
 }
 
-//Size should be: 8 for hamming7, 32 for PracticoDeMaquina 32, 1024 for PracticoDeMaquina 1024 and 32768 for PracticoDeMaquina 32768
+//Size should be: 8 for hamming7, 32 for Hamming 32, 1024 for Hamming 1024 and 32768 for Hamming 32768
 func encode(size int, input []byte, position int, numberOfByte int, controlBitsQuantity int) []byte {
 	encoded := make([]byte, int(size/8))
 	//Data bits accommodate process
