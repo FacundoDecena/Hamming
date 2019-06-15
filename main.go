@@ -1,10 +1,10 @@
 package main
 
 import (
+	"Hamming/HammingCodification"
+	"Hamming/Huffman"
 	"bufio"
 	"fmt"
-	"github.com/FacundoDecena/PracticoDeMaquinaTI2019/HammingCodification"
-	"github.com/FacundoDecena/PracticoDeMaquinaTI2019/Huffman"
 	"log"
 	"os"
 	"os/exec"
