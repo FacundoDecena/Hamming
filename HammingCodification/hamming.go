@@ -2,6 +2,7 @@ package HammingCodification
 
 import (
 	"math"
+	"strconv"
 )
 
 // Receives a byte slice, returns it encoded
@@ -89,13 +90,13 @@ func Hamming(size int, file []byte) []byte {
 	switch size {
 	case 32:
 		x := callTakeBits(26, file)
-		ret = callEncode(size, x)
+		ret = callEncode(size, x, len(file))
 	case 1024:
 		x := callTakeBits(1013, file)
-		ret = callEncode(size, x)
+		ret = callEncode(size, x, len(file))
 	case 32768:
 		x := convertTo32752(file)
-		ret = callEncode(size, x)
+		ret = callEncode(size, x, len(file))
 	}
 	return ret
 }
@@ -138,7 +139,7 @@ func convertTo32752(input []byte) [][]byte {
 	return ret
 }
 
-func callEncode(size int, inputFile [][]byte) (outPut []byte) {
+func callEncode(size int, inputFile [][]byte, lenFile int) (outPut []byte) {
 	position, numberOfByte, controlBitsQuantity := initialCase(size)
 	var aux [][]byte
 	//matrix := getGeneratingMatrix(size)
@@ -148,7 +149,12 @@ func callEncode(size int, inputFile [][]byte) (outPut []byte) {
 			outPut = append(outPut, aux[i][j])
 		}
 	}
-
+	s := []byte(strconv.FormatInt(int64(lenFile), 10))
+	lenInput := []byte(s)
+	for i := len(lenInput); i < 10; i = len(lenInput) {
+		lenInput = append([]byte{48}, lenInput...)
+	}
+	outPut = append(outPut, lenInput...)
 	return outPut
 }
 

@@ -2,6 +2,7 @@ package HammingCodification
 
 import (
 	"math"
+	"strconv"
 )
 
 func DeHamming7(file []byte, fixErrors bool) (ret []byte) {
@@ -121,10 +122,11 @@ func correct(bait byte, syndrome byte) (corrected byte) {
 
 //Check errors, invoke to the function decode for decoding all the input file and finally compress the result when it's necessary (32 and  1024 bits)
 func CallDecode(size int, input []byte, fixErrors bool) []byte {
+	lenInput, _ := strconv.ParseInt(string(input[len(input)-10:]), 10, 64)
+	input = input[:len(input)-10]
 	var decodedFile []byte
 	_, _, controlBitsQuantity := initialCase(size)
 	blockSize := size / 8
-	blockSizeReturn := int(math.Ceil(float64(size-controlBitsQuantity) / 8))
 	il := 0
 	sl := blockSize
 	//For every block of 32, 1024 or 32768 bits check errors and then decode it
@@ -149,8 +151,7 @@ func CallDecode(size int, input []byte, fixErrors bool) []byte {
 	case 32768:
 		ret = decodedFile
 	}
-	zeroQuantity := howManyZeros(ret[len(ret)-blockSizeReturn:])
-	return ret[:len(ret)-zeroQuantity]
+	return ret[:lenInput]
 }
 
 //Take the data bits from the hamming block of 32,1024 and 32768 bits
@@ -476,7 +477,7 @@ func checkError(size int, input []byte, controlBitsQuantity int) {
 	}
 }
 
-func howManyZeros(input []byte) int {
+/*func howManyZeros(input []byte) int {
 	countZeros := 0
 	for i := len(input) - 1; i >= 0; i-- {
 		if input[i] == 0 {
@@ -484,7 +485,7 @@ func howManyZeros(input []byte) int {
 		}
 	}
 	return countZeros
-}
+}*/
 
 func exp(exponent byte) (ret byte) {
 	switch exponent {
