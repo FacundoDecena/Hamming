@@ -5,6 +5,7 @@ import (
 	"Hamming/HuffmanCodification"
 	"bufio"
 	"fmt"
+	"github.com/pkg/errors"
 	"log"
 	"os"
 	"os/exec"
@@ -19,52 +20,81 @@ func main() {
 	continue_ := true
 	for continue_ {
 		clearScreen()
-		fmt.Println("1 - Proteger archivo")
-		fmt.Println("2 - Desporteger archivo")
-		fmt.Println("3 - Introducir errores")
-		fmt.Println("4 - Desproteger sin corregir errores")
-		fmt.Println("5 - Ver detalles de archivos")
-		fmt.Println("6 - Aplicar Huffman a un archivo")
-		fmt.Println("7 - Salir")
+		fmt.Println("1 - Hamming")
+		fmt.Println("2 - Huffman")
+		fmt.Println("3 - Ver detalles de archivos")
+		fmt.Println("4 - Salir")
+		fmt.Print("Su opcion: ")
 		mainOp = 0
 		_, _ = fmt.Fscanf(r, "%d", &mainOp)
 		switch mainOp {
 		case 1:
-			Hamming()
+			menuHamming()
 		case 2:
-			DeHamming(true)
+			menuHuffman()
 		case 3:
-			IntroduceErrors()
+			statistics()
 		case 4:
-			DeHamming(false)
-		case 5:
-			seeSize()
-		case 6:
-			Huffman()
-		case 7:
 			continue_ = false
-			/*case 8:
-			start:=time.Now()
-			bodyInicio,_ := loadFile("test.txt",false)
-			bodyCodificado := HammingCodification.Hamming(32, bodyInicio)
-			bodyConError := HammingCodification.InsertError(bodyCodificado[:len(bodyCodificado)-10], 32)
-			bodyConError = append(bodyConError,bodyCodificado[len(bodyCodificado)-10:]...)
-			bodyFinal :=HammingCodification.CallDecode(32,bodyConError,true)
-			saveFile("resultado.txt",bodyFinal)
-			elapsed:=time.Since(start)
-			if(bytes.Compare(bodyInicio,bodyFinal)==0){
-				log.Println("Son iguales.")
-			} else{
-				log.Println("Son distintos.")
-			}
-			log.Print(elapsed)
-			_, _ = fmt.Fscanf(r, "%d")
-			_, _ = fmt.Fscanf(r, "%d")*/
+		}
+
+	}
+}
+
+func menuHamming() {
+	var mainOp int
+	r := bufio.NewReader(os.Stdin)
+	continue_ := true
+	for continue_ {
+		clearScreen()
+		fmt.Println("1 - Proteger archivo")
+		fmt.Println("2 - Desporteger archivo")
+		fmt.Println("3 - Introducir errores")
+		fmt.Println("4 - Desproteger sin corregir errores")
+		fmt.Println("5 - Volver")
+		fmt.Print("Su opcion: ")
+		mainOp = 0
+		_, _ = fmt.Fscanf(r, "%d", &mainOp)
+		switch mainOp {
+		case 1:
+			hamming()
+		case 2:
+			deHamming(true)
+		case 3:
+			introduceErrors()
+		case 4:
+			deHamming(false)
+		case 5:
+			continue_ = false
 		}
 	}
 }
 
-func Hamming() {
+func menuHuffman() {
+	var mainOp int
+	r := bufio.NewReader(os.Stdin)
+	continue_ := true
+	for continue_ {
+		clearScreen()
+		fmt.Println("1 - Codificar")
+		fmt.Println("2 - Decodificar")
+		fmt.Println("3 - Volver")
+		fmt.Print("Su opcion: ")
+		mainOp = 0
+		_, _ = fmt.Fscanf(r, "%d", &mainOp)
+		_, _ = fmt.Fscanf(r, "%s")
+		switch mainOp {
+		case 1:
+			huffman()
+		case 2:
+			desHuffman()
+		case 3:
+			continue_ = false
+		}
+	}
+}
+
+func hamming() {
 	var dhOp int
 	r := bufio.NewReader(os.Stdin)
 	dhContinue_ := true
@@ -91,69 +121,10 @@ func Hamming() {
 		case 5:
 			dhContinue_ = false
 		}
-		_, _ = fmt.Fscanf(r, "%d")
 	}
-
 }
 
-func preHamming(size int) {
-	var fileName string
-	var encodedBody []byte
-	r := bufio.NewReader(os.Stdin)
-	clearScreen()
-	unixDate := askDate()
-	fmt.Println("Ingrese el nombre del archivo con extensión.")
-	_, _ = fmt.Fscanf(r, "%s", &fileName)
-	//Since golang does not show the time a program runs...
-	start := time.Now()
-	body, err := loadFile(fileName, false)
-	var fileType string
-	if err != nil {
-		fmt.Println(err)
-		_, _ = fmt.Fscanf(r, "%s")
-		_, _ = fmt.Fscanf(r, "%s")
-		return
-	} else {
-		switch size {
-		case 7:
-			fileType = ".ha1"
-		case 32:
-			fileType = ".ha2"
-		case 1024:
-			fileType = ".ha3"
-		case 32768:
-			fileType = ".ha4"
-		}
-		start = time.Now()
-		if len(body) == 0 {
-			encodedBody = []byte{}
-		} else {
-			switch size {
-			case 7:
-				encodedBody = HammingCodification.Hamming7(body)
-			case 32:
-				encodedBody = HammingCodification.Hamming(size, body)
-			case 1024:
-				encodedBody = HammingCodification.Hamming(size, body)
-			case 32768:
-				encodedBody = HammingCodification.Hamming(size, body)
-			}
-		}
-		fileName = strings.Replace(fileName, ".txt", fileType, -1)
-		encodedBody = append(encodedBody, unixDate...)
-		err = saveFile(fileName, encodedBody)
-		if err != nil {
-			fmt.Println(err)
-		}
-
-	}
-	elapsed := time.Since(start)
-	log.Printf("\nHamming took %s", elapsed)
-	_, _ = fmt.Fscanf(r, "%s")
-	_, _ = fmt.Fscanf(r, "%s")
-}
-
-func DeHamming(fixErrors bool) {
+func deHamming(fixErrors bool) {
 	var dhOp int
 	r := bufio.NewReader(os.Stdin)
 	dhContinue_ := true
@@ -180,8 +151,114 @@ func DeHamming(fixErrors bool) {
 		case 5:
 			dhContinue_ = false
 		}
-		_, _ = fmt.Fscanf(r, "%d")
 	}
+}
+
+func introduceErrors() {
+	var fileName string
+	var body, fileWithErrors []byte
+	var err error
+	r := bufio.NewReader(os.Stdin)
+	clearScreen()
+	fmt.Println("Ingrese el nombre del archivo a introducir errores con extension:")
+	_, _ = fmt.Fscanf(r, "%s", &fileName)
+	//Clean buffer
+	_, _ = fmt.Fscanf(r, "%s")
+	originalText, err := loadFile(fileName, false)
+	if err != nil {
+		fmt.Println(err)
+		_, _ = fmt.Fscanf(r, "%s")
+		return
+	}
+	//Split the string between name and extension
+	extension := strings.Split(fileName, ".")
+	switch extension[1] {
+	case "ha1":
+		body = originalText[:len(originalText)-10]
+		fileWithErrors = append(HammingCodification.InsertError7(body), originalText[len(originalText)-10:]...)
+	case "ha2":
+		body = originalText[:len(originalText)-20]
+		fileWithErrors = append(HammingCodification.InsertError(body, 32), originalText[len(originalText)-20:]...)
+	case "ha3":
+		body = originalText[:len(originalText)-20]
+		fileWithErrors = append(HammingCodification.InsertError(body, 1024), originalText[len(originalText)-20:]...)
+	case "ha4":
+		body = originalText[:len(originalText)-20]
+		fileWithErrors = append(HammingCodification.InsertError(body, 32768), originalText[len(originalText)-20:]...)
+	default:
+		fmt.Println("La extension del archivo no es válida.")
+		_, _ = fmt.Fscanf(r, "%s")
+		return
+	}
+	_ = saveFile(strings.Replace(fileName, ".ha", ".he", -1), fileWithErrors)
+	fmt.Println("Se han introducido errores de manera correcta.")
+	_, _ = fmt.Fscanf(r, "%s")
+}
+
+func preHamming(size int) {
+	var fileName string
+	var encodedBody []byte
+	r := bufio.NewReader(os.Stdin)
+	clearScreen()
+	unixDate, err := askDate()
+	if err != nil {
+		fmt.Print(err)
+		_, _ = fmt.Fscanf(r, "%s")
+		return
+	}
+	fmt.Println("Ingrese el nombre del archivo con extensión.")
+	_, _ = fmt.Fscanf(r, "%s", &fileName)
+	//Since golang does not show the time a program runs...
+	start := time.Now()
+	body, err := loadFile(fileName, false)
+	var fileType string
+	if err != nil {
+		fmt.Println(err)
+		_, _ = fmt.Fscanf(r, "%s")
+		return
+	} else {
+		switch size {
+		case 7:
+			fileType = ".ha1"
+		case 32:
+			fileType = ".ha2"
+		case 1024:
+			fileType = ".ha3"
+		case 32768:
+			fileType = ".ha4"
+		}
+		start = time.Now()
+		if len(body) == 0 {
+			encodedBody = []byte{}
+			if size != 7 {
+				for i := 0; i < 10; i++ {
+					encodedBody = append(encodedBody, byte(48))
+				}
+			}
+		} else {
+			switch size {
+			case 7:
+				encodedBody = HammingCodification.Hamming7(body)
+			case 32:
+				encodedBody = HammingCodification.Hamming(size, body)
+			case 1024:
+				encodedBody = HammingCodification.Hamming(size, body)
+			case 32768:
+				encodedBody = HammingCodification.Hamming(size, body)
+			}
+		}
+		fileName = strings.Replace(fileName, ".txt", fileType, -1)
+		encodedBody = append(encodedBody, unixDate...)
+		err = saveFile(fileName, encodedBody)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+	}
+	elapsed := time.Since(start)
+	log.Printf("\nHamming took %s", elapsed)
+	_, _ = fmt.Fscanf(r, "%s")
+	_, _ = fmt.Fscanf(r, "%s")
 }
 
 func preDeHamming(size int, fixErrors bool) {
@@ -244,76 +321,52 @@ func preDeHamming(size int, fixErrors bool) {
 	}
 }
 
-func IntroduceErrors() {
-	var fileName string
-	var body, fileWithErrors []byte
-	var err error
-	r := bufio.NewReader(os.Stdin)
+func statistics() {
 	clearScreen()
-	fmt.Println("Ingrese el nombre del archivo a introducir errores con extension:")
+	extensions := []string{".txt", ".ha1", ".ha2", ".ha3", ".ha4", ".huf"}
+	var fileName string
+	r := bufio.NewReader(os.Stdin)
+	fmt.Println("Ingrese el nombre del archivo sin extension.")
 	_, _ = fmt.Fscanf(r, "%s", &fileName)
-	//Clean buffer
-	_, _ = fmt.Fscanf(r, "%s")
-	originalText, err := loadFile(fileName, false)
-	if err != nil {
-		fmt.Println(err)
-		_, _ = fmt.Fscanf(r, "%s")
-		return
-	}
-	//Split the string between name and extension
-	extension := strings.Split(fileName, ".")
-	switch extension[1] {
-	case "ha1":
-		body = originalText[:len(originalText)-10]
-		fileWithErrors = append(HammingCodification.InsertError7(body), originalText[len(originalText)-10:]...)
-	case "ha2":
-		body = originalText[:len(originalText)-20]
-		fileWithErrors = append(HammingCodification.InsertError(body, 32), originalText[len(originalText)-20:]...)
-	case "ha3":
-		body = originalText[:len(originalText)-20]
-		fileWithErrors = append(HammingCodification.InsertError(body, 1024), originalText[len(originalText)-20:]...)
-	case "ha4":
-		body = originalText[:len(originalText)-20]
-		fileWithErrors = append(HammingCodification.InsertError(body, 32768), originalText[len(originalText)-20:]...)
-	default:
-		fmt.Println("La extension del archivo no es válida.")
-		_, _ = fmt.Fscanf(r, "%s")
-		return
-	}
-	_ = saveFile(strings.Replace(fileName, ".ha", ".he", -1), fileWithErrors)
-	fmt.Println("Se han introducido errores de manera correcta.")
-	_, _ = fmt.Fscanf(r, "%s")
-}
-
-func Huffman() {
-	var mainOp int
-	r := bufio.NewReader(os.Stdin)
-	continue_ := true
-	for continue_ {
-		clearScreen()
-		fmt.Println("1 - Codificar")
-		fmt.Println("2 - Decodificar")
-		fmt.Println("3 - Salir")
-		mainOp = 0
-		_, _ = fmt.Fscanf(r, "%d", &mainOp)
-		_, _ = fmt.Fscanf(r, "%s")
-		switch mainOp {
-		case 1:
-			preHuffman()
-		case 2:
-			preDesHuffman()
-		case 3:
-			continue_ = false
+	clearScreen()
+	for index := 0; index < len(extensions); index++ {
+		body, err := loadFile(fileName+extensions[index], false)
+		if err != nil {
+			fmt.Print("\n\n ", err)
+		} else {
+			switch extensions[index] {
+			case ".txt":
+				fmt.Print(" El archivo original tiene un tamaño de:", len(body), " Bytes ", " o ", (len(body))/1024, " KB")
+			case ".ha1":
+				fmt.Print("\n\n Hamming 7 tiene un tamaño de: ", len(body), " Bytes ", " o ", len(body)/1024, " KB")
+			case ".ha2":
+				fmt.Print("\n\n Hamming 32 tiene un tamaño de: ", len(body), " Bytes ", " o ", len(body)/1024, " KB")
+			case ".ha3":
+				fmt.Print("\n\n Hamming 1024 tiene un tamaño de: ", len(body), " Bytes ", " o ", len(body)/1024, " KB")
+			case ".ha4":
+				fmt.Print("\n\n Hamming 32"+
+					"768 tiene un tamaño de: ", len(body), " Bytes ", " o ", len(body)/1024, " KB")
+			case ".huf":
+				fmt.Print("\n\n Huffman tiene un tamaño de: ", len(body), " Bytes ", " o ", len(body)/1024, " KB")
+			}
 		}
-		_, _ = fmt.Fscanf(r, "%s")
 	}
+	fmt.Println("\n\n Presione enter para continuar")
+	_, _ = fmt.Fscanf(r, "%s")
+	_, _ = fmt.Fscanf(r, "%s")
 }
 
-func preHuffman() {
+func huffman() {
 	var fileName string
 	r := bufio.NewReader(os.Stdin)
 	clearScreen()
-	unixDate := askDate()
+	unixDate, err := askDate()
+	if err != nil {
+		fmt.Print(err)
+		_, _ = fmt.Fscanf(r, "%s")
+		_, _ = fmt.Fscanf(r, "%s")
+		return
+	}
 	fmt.Println("Ingrese el nombre del archivo con extension.")
 	_, _ = fmt.Fscanf(r, "%s", &fileName)
 	//Since golang does not show the time a program runs...
@@ -351,7 +404,7 @@ func preHuffman() {
 	_, _ = fmt.Fscanf(r, "%s")
 }
 
-func preDesHuffman() {
+func desHuffman() {
 	var fileName string
 	r := bufio.NewReader(os.Stdin)
 	clearScreen()
@@ -387,52 +440,65 @@ func preDesHuffman() {
 	_, _ = fmt.Fscanf(r, "%s")
 }
 
-func clearScreen() {
-	cmd := exec.Command("cmd", "/c", "cls") //Windows example, its tested
-	cmd.Stdout = os.Stdout
-	_ = cmd.Run()
-	fmt.Println("#####################################")
-	fmt.Println("_______________HAMMING_______________")
-	fmt.Println("#####################################")
-	fmt.Println()
-}
-
-func askDate() []byte {
+func askDate() ([]byte, error) {
 	//Ask for the date
+	clearScreen()
 	r := bufio.NewReader(os.Stdin)
-	var day int
-	var auxMonth int
-	var year int
-	var hour int
-	var minutes int
-	var seconds int
-	fmt.Println("Ingrese la dia, mes, año, hora, minutos y segundos en los que quiere la decodificacin del archivo este disponible:")
+	var auxDay, auxMonth, auxYear, auxHour, auxMinutes, auxSeconds string
+	var day, month, year, hour, minutes, seconds int
+	err := make([]error, 6)
+	fmt.Println("Ingrese el dia, mes, año, hora, minutos y segundos en los que quiere la decodificacin del archivo este disponible:")
 	fmt.Print("Dia: ")
-	_, _ = fmt.Fscanf(r, "%d", &day)
+	_, _ = fmt.Fscanf(r, "%s", &auxDay)
 	_, _ = fmt.Fscanf(r, "%d")
 	fmt.Print("Mes: ")
-	_, _ = fmt.Fscanf(r, "%d", &auxMonth)
+	_, _ = fmt.Fscanf(r, "%s", &auxMonth)
 	_, _ = fmt.Fscanf(r, "%d")
 	fmt.Print("Año: ")
-	_, _ = fmt.Fscanf(r, "%d", &year)
+	_, _ = fmt.Fscanf(r, "%s", &auxYear)
 	_, _ = fmt.Fscanf(r, "%d")
 	fmt.Print("Hora: ")
-	_, _ = fmt.Fscanf(r, "%d", &hour)
+	_, _ = fmt.Fscanf(r, "%s", &auxHour)
 	_, _ = fmt.Fscanf(r, "%d")
 	fmt.Print("Minutos: ")
-	_, _ = fmt.Fscanf(r, "%d", &minutes)
+	_, _ = fmt.Fscanf(r, "%s", &auxMinutes)
 	_, _ = fmt.Fscanf(r, "%d")
 	fmt.Print("Segundos: ")
-	_, _ = fmt.Fscanf(r, "%d", &seconds)
+	_, _ = fmt.Fscanf(r, "%s", &auxSeconds)
 	_, _ = fmt.Fscanf(r, "%d")
-	month := time.Month(auxMonth)
+	//Searching errors process
+	day, err[0] = strconv.Atoi(auxDay)
+	month, err[1] = strconv.Atoi(auxMonth)
+	year, err[2] = strconv.Atoi(auxYear)
+	hour, err[3] = strconv.Atoi(auxHour)
+	minutes, err[4] = strconv.Atoi(auxMinutes)
+	seconds, err[5] = strconv.Atoi(auxSeconds)
+	//Check if the date have errors
+	for i := 0; i < len(err); i++ {
+		if err[i] != nil {
+			return nil, errors.New("Formato de fecha incorrecto.")
+		}
+	}
+	//No error found then create the date
+	parseMonth := time.Month(month)
 	location, _ := time.LoadLocation("America/Argentina/Cordoba")
-	auxDate := time.Date(year, month, day, hour, minutes, seconds, 0, location)
+	auxDate := time.Date(year, parseMonth, day, hour, minutes, seconds, 0, location)
 	auxUnixDate := auxDate.Unix()
 	s := []byte(strconv.FormatInt(auxUnixDate, 10))
 	unixDate := []byte(s)
 	for i := len(unixDate); i < 10; i = len(unixDate) {
 		unixDate = append([]byte{48}, unixDate...)
 	}
-	return unixDate
+	clearScreen()
+	return unixDate, nil
+}
+
+func clearScreen() {
+	cmd := exec.Command("cmd", "/c", "cls") //Windows example, its tested
+	cmd.Stdout = os.Stdout
+	_ = cmd.Run()
+	fmt.Println("#####################################")
+	fmt.Println("___________Hamming/Huffman___________")
+	fmt.Println("#####################################")
+	fmt.Println()
 }

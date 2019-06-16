@@ -123,6 +123,9 @@ func correct(bait byte, syndrome byte) (corrected byte) {
 //Check errors, invoke to the function decode for decoding all the input file and finally compress the result when it's necessary (32 and  1024 bits)
 func CallDecode(size int, input []byte, fixErrors bool) []byte {
 	lenInput, _ := strconv.ParseInt(string(input[len(input)-10:]), 10, 64)
+	if lenInput == 0 {
+		return []byte{}
+	}
 	input = input[:len(input)-10]
 	var decodedFile []byte
 	_, _, controlBitsQuantity := initialCase(size)
