@@ -147,32 +147,26 @@ func encode(body []byte, code []string) (ret []byte, dic []byte) {
 			if length+lengthI < 8 {
 				codeJ >>= uint(length)
 				tempCode = tempCode | codeJ
-				if j == 0 {
-					length += lengthI
-				}
+				length += lengthI
+
 			} else {
 				//Save the part that fits in the byte
 				firstPart := codeJ & ((exp(byte(8-length)) - 1) << uint(length))
+				lengthFP := 8 - length
 				//Save the part that does not fit in the byte
 				secondPart := codeJ & (exp(byte(length)) - 1)
 				//Complete the byte
-				if j == 0 {
-					tempCode = tempCode | (firstPart >> uint(length))
-					//Save the completed byte to the ret structure
-					ret = append(ret, tempCode)
-					//Take the part that did not fit the byte
-					tempCode = secondPart << uint(8-length)
+				tempCode = tempCode | (firstPart >> uint(length))
+				//Save the completed byte to the ret structure
+				ret = append(ret, tempCode)
+				//Take the part that did not fit the byte
+				tempCode = secondPart << uint(8-length)
+				if lengthI > 8 {
+					length = 8 - lengthFP
+					lengthI = lengthI - 8
 				} else {
-					tempCode = tempCode | (firstPart >> uint(length-8+lengthI))
-				}
-
-				if length <= 8 && j == 0 {
 					length = length + lengthI - 8
-					lengthI = length
-				} /*else {
-					length = length - lengthI + 8
-					lengthI = length
-				}*/
+				}
 			}
 		}
 	}
