@@ -44,23 +44,6 @@ func main() {
 			Huffman()
 		case 7:
 			continue_ = false
-			/*case 8:
-			start:=time.Now()
-			bodyInicio,_ := loadFile("test.txt",false)
-			bodyCodificado := HammingCodification.Hamming(32, bodyInicio)
-			bodyConError := HammingCodification.InsertError(bodyCodificado[:len(bodyCodificado)-10], 32)
-			bodyConError = append(bodyConError,bodyCodificado[len(bodyCodificado)-10:]...)
-			bodyFinal :=HammingCodification.CallDecode(32,bodyConError,true)
-			saveFile("resultado.txt",bodyFinal)
-			elapsed:=time.Since(start)
-			if(bytes.Compare(bodyInicio,bodyFinal)==0){
-				log.Println("Son iguales.")
-			} else{
-				log.Println("Son distintos.")
-			}
-			log.Print(elapsed)
-			_, _ = fmt.Fscanf(r, "%d")
-			_, _ = fmt.Fscanf(r, "%d")*/
 		}
 	}
 }
@@ -130,6 +113,11 @@ func preHamming(size int) {
 		start = time.Now()
 		if len(body) == 0 {
 			encodedBody = []byte{}
+			if size != 7 {
+				for i := 0; i < 10; i++ {
+					encodedBody = append(encodedBody, byte(48))
+				}
+			}
 		} else {
 			switch size {
 			case 7:
