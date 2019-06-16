@@ -138,25 +138,41 @@ func encode(body []byte, code []string) (ret []byte, dic []byte) {
 		lengthI := table[body[i]].Length
 		//Compression
 		for j := 0; j < len(codificationI); j++ {
+			if length == 8 {
+				length = 0
+			}
 			//Get the first byte
 			codeJ := codificationI[j]
 			//If the codification is not long enough keep going
 			if length+lengthI < 8 {
 				codeJ >>= uint(length)
 				tempCode = tempCode | codeJ
-				length += lengthI
+				if j == 0 {
+					length += lengthI
+				}
 			} else {
 				//Save the part that fits in the byte
 				firstPart := codeJ & ((exp(byte(8-length)) - 1) << uint(length))
 				//Save the part that does not fit in the byte
 				secondPart := codeJ & (exp(byte(length)) - 1)
 				//Complete the byte
-				tempCode = tempCode | (firstPart >> uint(length))
-				//Save the completed byte to the ret structure
-				ret = append(ret, tempCode)
-				//Take the part that did not fit the byte
-				tempCode = secondPart << uint(8-length)
-				length = length + lengthI - 8
+				if j == 0 {
+					tempCode = tempCode | (firstPart >> uint(length))
+					//Save the completed byte to the ret structure
+					ret = append(ret, tempCode)
+					//Take the part that did not fit the byte
+					tempCode = secondPart << uint(8-length)
+				} else {
+					tempCode = tempCode | (firstPart >> uint(length-8+lengthI))
+				}
+
+				if length <= 8 && j == 0 {
+					length = length + lengthI - 8
+					lengthI = length
+				} /*else {
+					length = length - lengthI + 8
+					lengthI = length
+				}*/
 			}
 		}
 	}
