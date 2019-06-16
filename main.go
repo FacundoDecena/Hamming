@@ -22,10 +22,12 @@ func main() {
 		clearScreen()
 		fmt.Println("1 - Hamming")
 		fmt.Println("2 - Huffman")
-		fmt.Println("3 - Ver detalles de archivos")
-		fmt.Println("4 - Salir")
+		fmt.Println("3 - Hamming/Huffman")
+		fmt.Println("4 - Ver detalles de archivos")
+		fmt.Println("5 - Salir")
 		fmt.Print("Su opcion: ")
 		mainOp = 0
+		_, _ = fmt.Fscanf(r, "%s")
 		_, _ = fmt.Fscanf(r, "%d", &mainOp)
 		switch mainOp {
 		case 1:
@@ -33,8 +35,10 @@ func main() {
 		case 2:
 			menuHuffman()
 		case 3:
-			statistics()
+			menuHammingHuffman()
 		case 4:
+			statistics()
+		case 5:
 			continue_ = false
 		}
 
@@ -88,6 +92,30 @@ func menuHuffman() {
 			huffman()
 		case 2:
 			desHuffman()
+		case 3:
+			continue_ = false
+		}
+	}
+}
+
+func menuHammingHuffman() {
+	var mainOp int
+	r := bufio.NewReader(os.Stdin)
+	continue_ := true
+	for continue_ {
+		clearScreen()
+		fmt.Println("1 - Comprimir y proteger archivo")
+		fmt.Println("2 - Desproteger y descomprimir archivo")
+		fmt.Println("3 - Volver")
+		fmt.Print("Su opcion: ")
+		mainOp = 0
+		_, _ = fmt.Fscanf(r, "%s")
+		_, _ = fmt.Fscanf(r, "%d", &mainOp)
+		switch mainOp {
+		case 1:
+			preHammingHuffman()
+		case 2:
+			preDeHammingDeHuffman()
 		case 3:
 			continue_ = false
 		}
@@ -323,7 +351,7 @@ func preDeHamming(size int, fixErrors bool) {
 
 func statistics() {
 	clearScreen()
-	extensions := []string{".txt", ".ha1", ".ha2", ".ha3", ".ha4", ".huf"}
+	extensions := []string{".txt", ".ha1", ".ha2", ".ha3", ".ha4", ".huf", ".dic", ".hh1", ".dichh1", ".hh2", ".dichh2", ".hh3", ".dichh3", ".hh4", ".dichh4"}
 	var fileName string
 	r := bufio.NewReader(os.Stdin)
 	fmt.Println("Ingrese el nombre del archivo sin extension.")
@@ -331,9 +359,7 @@ func statistics() {
 	clearScreen()
 	for index := 0; index < len(extensions); index++ {
 		body, err := loadFile(fileName+extensions[index], false)
-		if err != nil {
-			fmt.Print("\n\n ", err)
-		} else {
+		if err == nil {
 			switch extensions[index] {
 			case ".txt":
 				fmt.Print(" El archivo original tiene un tamaño de:", len(body), " Bytes ", " o ", (len(body))/1024, " KB")
@@ -348,6 +374,24 @@ func statistics() {
 					"768 tiene un tamaño de: ", len(body), " Bytes ", " o ", len(body)/1024, " KB")
 			case ".huf":
 				fmt.Print("\n\n Huffman tiene un tamaño de: ", len(body), " Bytes ", " o ", len(body)/1024, " KB")
+			case ".dic":
+				fmt.Print("\n\n La tabla de Huffman tiene un tamaño de: ", len(body), " Bytes ", " o ", len(body)/1024, " KB")
+			case ".hh1":
+				fmt.Print("\n\n Hamming/Huffman 7 tiene un tamaño de: ", len(body), " Bytes ", " o ", len(body)/1024, " KB")
+			case ".dichh1":
+				fmt.Print("\n\n La tabla de Hamming/Huffman 7 tiene un tamaño de: ", len(body), " Bytes ", " o ", len(body)/1024, " KB")
+			case ".hh2":
+				fmt.Print("\n\n Hamming/Huffman 32 tiene un tamaño de: ", len(body), " Bytes ", " o ", len(body)/1024, " KB")
+			case ".dichh2":
+				fmt.Print("\n\n La tabla de Hamming/Huffman 32 tiene un tamaño de: ", len(body), " Bytes ", " o ", len(body)/1024, " KB")
+			case ".hh3":
+				fmt.Print("\n\n Hamming/Huffman 1024 tiene un tamaño de: ", len(body), " Bytes ", " o ", len(body)/1024, " KB")
+			case ".dichh3":
+				fmt.Print("\n\n La tabla de Hamming/Huffman 1024 tiene un tamaño de: ", len(body), " Bytes ", " o ", len(body)/1024, " KB")
+			case ".hh4":
+				fmt.Print("\n\n Hamming/Huffman 32768 tiene un tamaño de: ", len(body), " Bytes ", " o ", len(body)/1024, " KB")
+			case ".dichh4":
+				fmt.Print("\n\n La tabla de Hamming/Huffman 32768 tiene un tamaño de: ", len(body), " Bytes ", " o ", len(body)/1024, " KB")
 			}
 		}
 	}
@@ -431,6 +475,8 @@ func desHuffman() {
 		err = saveFile(fileName, decodedBody)
 		if err != nil {
 			fmt.Println(err)
+			_, _ = fmt.Fscanf(r, "%s")
+			_, _ = fmt.Fscanf(r, "%s")
 			return
 		}
 	}
@@ -440,6 +486,238 @@ func desHuffman() {
 	_, _ = fmt.Fscanf(r, "%s")
 }
 
+func preHammingHuffman() {
+
+	//Ask for hamming type
+	var dhOp int
+	r := bufio.NewReader(os.Stdin)
+	dhContinue_ := true
+	var size int
+	var bodyExtension string
+	var dicExtension string
+	for dhContinue_ {
+		clearScreen()
+		fmt.Println("¿Que tipo de Hamming quiere aplicar?")
+		fmt.Println("1 - Hamming 7")
+		fmt.Println("2 - Hamming 32")
+		fmt.Println("3 - Hamming 1024")
+		fmt.Println("4 - Hamming 32768")
+		fmt.Println("5 - Volver")
+		fmt.Printf("Su opcion: ")
+		dhOp = 0
+		_, _ = fmt.Fscanf(r, "%d", &dhOp)
+		switch dhOp {
+		case 1:
+			size = 7
+			bodyExtension = ".hh1"
+			dicExtension = ".dichh1"
+			dhContinue_ = false
+		case 2:
+			size = 32
+			bodyExtension = ".hh2"
+			dicExtension = ".dichh2"
+			dhContinue_ = false
+		case 3:
+			size = 1024
+			bodyExtension = ".hh3"
+			dicExtension = ".dichh3"
+			dhContinue_ = false
+		case 4:
+			size = 32768
+			bodyExtension = ".hh4"
+			dicExtension = ".dichh4"
+			dhContinue_ = false
+		case 5:
+			return
+		}
+	}
+
+	//Ask for date
+	var unixDate []byte
+	var err error
+	err = errors.New("Not nil error")
+	for err != nil {
+		unixDate, err = askDate()
+		if err != nil {
+			fmt.Print(err)
+			_, _ = fmt.Fscanf(r, "%s")
+			_, _ = fmt.Fscanf(r, "%s")
+		}
+	}
+
+	//Ask for file name
+	var fileName string
+	var body []byte
+	err = errors.New("Not nil error")
+	for err != nil {
+		fmt.Println("Ingrese el nombre del archivo con extension:")
+		//Clean buffer
+		_, _ = fmt.Fscanf(r, "%s")
+		_, _ = fmt.Fscanf(r, "%s", &fileName)
+		body, err = loadFile(fileName, false)
+		if err != nil {
+			fmt.Println(err)
+			_, _ = fmt.Fscanf(r, "%s")
+			clearScreen()
+		}
+
+	}
+
+	start := time.Now()
+	//Compress
+	compressedBody, dictionary := HuffmanCodification.CallHuffman(body)
+
+	//Protect
+	var encodedBody []byte
+	var encodedDic []byte
+	start = time.Now()
+	if len(compressedBody) == 0 {
+		encodedBody = []byte{}
+		if size != 7 {
+			for i := 0; i < 10; i++ {
+				encodedBody = append(encodedBody, byte(48))
+				encodedDic = append(encodedDic, byte(48))
+			}
+		}
+	} else {
+		switch size {
+		case 7:
+			encodedBody = HammingCodification.Hamming7(compressedBody)
+			encodedDic = HammingCodification.Hamming7(dictionary)
+		default:
+			encodedBody = HammingCodification.Hamming(size, compressedBody)
+			encodedDic = HammingCodification.Hamming(size, dictionary)
+		}
+	}
+	encodedDic = append(encodedDic, unixDate...)
+
+	//Save files
+	fileName = strings.Split(fileName, ".")[0]
+	err = saveFile(fileName+bodyExtension, encodedBody)
+	if err != nil {
+		fmt.Println(err)
+		_, _ = fmt.Fscanf(r, "%s")
+		_, _ = fmt.Fscanf(r, "%s")
+		return
+	}
+	err = saveFile(fileName+dicExtension, encodedDic)
+	if err != nil {
+		fmt.Println(err)
+		_, _ = fmt.Fscanf(r, "%s")
+		_, _ = fmt.Fscanf(r, "%s")
+		return
+	}
+
+	elapsed := time.Since(start)
+	log.Printf("\nHamming/Huffman took %s", elapsed)
+	_, _ = fmt.Fscanf(r, "%s")
+	_, _ = fmt.Fscanf(r, "%s")
+}
+
+func preDeHammingDeHuffman() {
+
+	//Ask for hamming type
+	var dhOp int
+	r := bufio.NewReader(os.Stdin)
+	dhContinue_ := true
+	var size int
+	var bodyExtension string
+	var dicExtension string
+	var finalExtension string
+	for dhContinue_ {
+		clearScreen()
+		fmt.Println("¿Que tipo de Hamming ha sido aplicado?")
+		fmt.Println("1 - Hamming 7")
+		fmt.Println("2 - Hamming 32")
+		fmt.Println("3 - Hamming 1024")
+		fmt.Println("4 - Hamming 32768")
+		fmt.Println("5 - Volver")
+		fmt.Printf("Su opcion: ")
+		dhOp = 0
+		_, _ = fmt.Fscanf(r, "%d", &dhOp)
+		switch dhOp {
+		case 1:
+			size = 7
+			bodyExtension = ".hh1"
+			dicExtension = ".dichh1"
+			finalExtension = ".dhh1"
+			dhContinue_ = false
+		case 2:
+			size = 32
+			bodyExtension = ".hh2"
+			dicExtension = ".dichh2"
+			finalExtension = ".dhh2"
+			dhContinue_ = false
+		case 3:
+			size = 1024
+			bodyExtension = ".hh3"
+			dicExtension = ".dichh3"
+			finalExtension = ".dhh3"
+			dhContinue_ = false
+		case 4:
+			size = 32768
+			bodyExtension = ".hh4"
+			dicExtension = ".dichh4"
+			finalExtension = ".dhh4"
+			dhContinue_ = false
+		case 5:
+			return
+		}
+	}
+
+	//Ask for file name
+	var fileName string
+	var encodedBody []byte
+	var encodedDic []byte
+	err1 := errors.New("Not nil error")
+	err2 := errors.New("Not nil error")
+	clearScreen()
+	fmt.Println("Ingrese el nombre del archivo sin extension:")
+	_, _ = fmt.Fscanf(r, "%s")
+	_, _ = fmt.Fscanf(r, "%s", &fileName)
+	//Clean buffer
+	_, _ = fmt.Fscanf(r, "%s")
+	encodedBody, err1 = loadFile(fileName+bodyExtension, false)
+	if err1 != nil {
+		fmt.Println(err1)
+		_, _ = fmt.Fscanf(r, "%s")
+		return
+	}
+	encodedDic, err2 = loadFile(fileName+dicExtension, true)
+	if err2 != nil {
+		fmt.Println(err2)
+		_, _ = fmt.Fscanf(r, "%s")
+		return
+	}
+
+	start := time.Now()
+	//Desprotect
+	var decodedBody []byte
+	var decodedDic []byte
+	if size == 7 {
+		decodedBody = HammingCodification.DeHamming7(encodedBody, true)
+		decodedDic = HammingCodification.DeHamming7(encodedDic, true)
+	} else {
+		decodedBody = HammingCodification.CallDecode(size, encodedBody, true)
+		decodedDic = HammingCodification.CallDecode(size, encodedDic, true)
+	}
+
+	//Descompress
+	descompressBody := HuffmanCodification.Deshuffman(decodedBody, decodedDic)
+
+	//Save file
+	err := saveFile(fileName+finalExtension, descompressBody)
+	if err != nil {
+		fmt.Println(err)
+
+		return
+	}
+	elapsed := time.Since(start)
+	log.Printf("\nDeHamming/Deshuffman took %s", elapsed)
+	_, _ = fmt.Fscanf(r, "%s")
+
+}
+
 func askDate() ([]byte, error) {
 	//Ask for the date
 	clearScreen()
@@ -447,7 +725,7 @@ func askDate() ([]byte, error) {
 	var auxDay, auxMonth, auxYear, auxHour, auxMinutes, auxSeconds string
 	var day, month, year, hour, minutes, seconds int
 	err := make([]error, 6)
-	fmt.Println("Ingrese el dia, mes, año, hora, minutos y segundos en los que quiere la decodificacin del archivo este disponible:")
+	fmt.Println("Ingrese el dia, mes, año, hora, minutos y segundos en los que quiere la decodificacion del archivo este disponible:")
 	fmt.Print("Dia: ")
 	_, _ = fmt.Fscanf(r, "%s", &auxDay)
 	_, _ = fmt.Fscanf(r, "%d")
