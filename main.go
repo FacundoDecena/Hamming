@@ -20,35 +20,81 @@ func main() {
 	continue_ := true
 	for continue_ {
 		clearScreen()
-		fmt.Println("1 - Proteger archivo")
-		fmt.Println("2 - Desporteger archivo")
-		fmt.Println("3 - Introducir errores")
-		fmt.Println("4 - Desproteger sin corregir errores")
-		fmt.Println("5 - Ver detalles de archivos")
-		fmt.Println("6 - Aplicar Huffman a un archivo")
-		fmt.Println("7 - Salir")
+		fmt.Println("1 - Hamming")
+		fmt.Println("2 - Huffman")
+		fmt.Println("3 - Ver detalles de archivos")
+		fmt.Println("4 - Salir")
+		fmt.Print("Su opcion: ")
 		mainOp = 0
 		_, _ = fmt.Fscanf(r, "%d", &mainOp)
 		switch mainOp {
 		case 1:
-			Hamming()
+			menuHamming()
 		case 2:
-			DeHamming(true)
+			menuHuffman()
 		case 3:
-			IntroduceErrors()
+			statistics()
 		case 4:
-			DeHamming(false)
+			continue_ = false
+		}
+
+	}
+}
+
+func menuHamming() {
+	var mainOp int
+	r := bufio.NewReader(os.Stdin)
+	continue_ := true
+	for continue_ {
+		clearScreen()
+		fmt.Println("1 - Proteger archivo")
+		fmt.Println("2 - Desporteger archivo")
+		fmt.Println("3 - Introducir errores")
+		fmt.Println("4 - Desproteger sin corregir errores")
+		fmt.Println("5 - Volver")
+		fmt.Print("Su opcion: ")
+		mainOp = 0
+		_, _ = fmt.Fscanf(r, "%d", &mainOp)
+		switch mainOp {
+		case 1:
+			hamming()
+		case 2:
+			deHamming(true)
+		case 3:
+			introduceErrors()
+		case 4:
+			deHamming(false)
 		case 5:
-			seeSize()
-		case 6:
-			Huffman()
-		case 7:
 			continue_ = false
 		}
 	}
 }
 
-func Hamming() {
+func menuHuffman() {
+	var mainOp int
+	r := bufio.NewReader(os.Stdin)
+	continue_ := true
+	for continue_ {
+		clearScreen()
+		fmt.Println("1 - Codificar")
+		fmt.Println("2 - Decodificar")
+		fmt.Println("3 - Volver")
+		fmt.Print("Su opcion: ")
+		mainOp = 0
+		_, _ = fmt.Fscanf(r, "%d", &mainOp)
+		_, _ = fmt.Fscanf(r, "%s")
+		switch mainOp {
+		case 1:
+			huffman()
+		case 2:
+			desHuffman()
+		case 3:
+			continue_ = false
+		}
+	}
+}
+
+func hamming() {
 	var dhOp int
 	r := bufio.NewReader(os.Stdin)
 	dhContinue_ := true
@@ -76,6 +122,77 @@ func Hamming() {
 			dhContinue_ = false
 		}
 	}
+}
+
+func deHamming(fixErrors bool) {
+	var dhOp int
+	r := bufio.NewReader(os.Stdin)
+	dhContinue_ := true
+	for dhContinue_ {
+		clearScreen()
+		fmt.Println("¿Que tipo de Hamming ha sido aplicado?")
+		fmt.Println("1 - Hamming 7")
+		fmt.Println("2 - Hamming 32")
+		fmt.Println("3 - Hamming 1024")
+		fmt.Println("4 - Hamming 32768")
+		fmt.Println("5 - Volver")
+		fmt.Printf("Su opcion: ")
+		dhOp = 0
+		_, _ = fmt.Fscanf(r, "%d", &dhOp)
+		switch dhOp {
+		case 1:
+			preDeHamming(7, fixErrors)
+		case 2:
+			preDeHamming(32, fixErrors)
+		case 3:
+			preDeHamming(1024, fixErrors)
+		case 4:
+			preDeHamming(32768, fixErrors)
+		case 5:
+			dhContinue_ = false
+		}
+	}
+}
+
+func introduceErrors() {
+	var fileName string
+	var body, fileWithErrors []byte
+	var err error
+	r := bufio.NewReader(os.Stdin)
+	clearScreen()
+	fmt.Println("Ingrese el nombre del archivo a introducir errores con extension:")
+	_, _ = fmt.Fscanf(r, "%s", &fileName)
+	//Clean buffer
+	_, _ = fmt.Fscanf(r, "%s")
+	originalText, err := loadFile(fileName, false)
+	if err != nil {
+		fmt.Println(err)
+		_, _ = fmt.Fscanf(r, "%s")
+		return
+	}
+	//Split the string between name and extension
+	extension := strings.Split(fileName, ".")
+	switch extension[1] {
+	case "ha1":
+		body = originalText[:len(originalText)-10]
+		fileWithErrors = append(HammingCodification.InsertError7(body), originalText[len(originalText)-10:]...)
+	case "ha2":
+		body = originalText[:len(originalText)-20]
+		fileWithErrors = append(HammingCodification.InsertError(body, 32), originalText[len(originalText)-20:]...)
+	case "ha3":
+		body = originalText[:len(originalText)-20]
+		fileWithErrors = append(HammingCodification.InsertError(body, 1024), originalText[len(originalText)-20:]...)
+	case "ha4":
+		body = originalText[:len(originalText)-20]
+		fileWithErrors = append(HammingCodification.InsertError(body, 32768), originalText[len(originalText)-20:]...)
+	default:
+		fmt.Println("La extension del archivo no es válida.")
+		_, _ = fmt.Fscanf(r, "%s")
+		return
+	}
+	_ = saveFile(strings.Replace(fileName, ".ha", ".he", -1), fileWithErrors)
+	fmt.Println("Se han introducido errores de manera correcta.")
+	_, _ = fmt.Fscanf(r, "%s")
 }
 
 func preHamming(size int) {
@@ -144,36 +261,6 @@ func preHamming(size int) {
 	_, _ = fmt.Fscanf(r, "%s")
 }
 
-func DeHamming(fixErrors bool) {
-	var dhOp int
-	r := bufio.NewReader(os.Stdin)
-	dhContinue_ := true
-	for dhContinue_ {
-		clearScreen()
-		fmt.Println("¿Que tipo de Hamming ha sido aplicado?")
-		fmt.Println("1 - Hamming 7")
-		fmt.Println("2 - Hamming 32")
-		fmt.Println("3 - Hamming 1024")
-		fmt.Println("4 - Hamming 32768")
-		fmt.Println("5 - Volver")
-		fmt.Printf("Su opcion: ")
-		dhOp = 0
-		_, _ = fmt.Fscanf(r, "%d", &dhOp)
-		switch dhOp {
-		case 1:
-			preDeHamming(7, fixErrors)
-		case 2:
-			preDeHamming(32, fixErrors)
-		case 3:
-			preDeHamming(1024, fixErrors)
-		case 4:
-			preDeHamming(32768, fixErrors)
-		case 5:
-			dhContinue_ = false
-		}
-	}
-}
-
 func preDeHamming(size int, fixErrors bool) {
 	var fileName string
 	var body []byte
@@ -234,54 +321,14 @@ func preDeHamming(size int, fixErrors bool) {
 	}
 }
 
-func IntroduceErrors() {
-	var fileName string
-	var body, fileWithErrors []byte
-	var err error
-	r := bufio.NewReader(os.Stdin)
+func statistics() {
 	clearScreen()
-	fmt.Println("Ingrese el nombre del archivo a introducir errores con extension:")
-	_, _ = fmt.Fscanf(r, "%s", &fileName)
-	//Clean buffer
-	_, _ = fmt.Fscanf(r, "%s")
-	originalText, err := loadFile(fileName, false)
-	if err != nil {
-		fmt.Println(err)
-		_, _ = fmt.Fscanf(r, "%s")
-		return
-	}
-	//Split the string between name and extension
-	extension := strings.Split(fileName, ".")
-	switch extension[1] {
-	case "ha1":
-		body = originalText[:len(originalText)-10]
-		fileWithErrors = append(HammingCodification.InsertError7(body), originalText[len(originalText)-10:]...)
-	case "ha2":
-		body = originalText[:len(originalText)-20]
-		fileWithErrors = append(HammingCodification.InsertError(body, 32), originalText[len(originalText)-20:]...)
-	case "ha3":
-		body = originalText[:len(originalText)-20]
-		fileWithErrors = append(HammingCodification.InsertError(body, 1024), originalText[len(originalText)-20:]...)
-	case "ha4":
-		body = originalText[:len(originalText)-20]
-		fileWithErrors = append(HammingCodification.InsertError(body, 32768), originalText[len(originalText)-20:]...)
-	default:
-		fmt.Println("La extension del archivo no es válida.")
-		_, _ = fmt.Fscanf(r, "%s")
-		return
-	}
-	_ = saveFile(strings.Replace(fileName, ".ha", ".he", -1), fileWithErrors)
-	fmt.Println("Se han introducido errores de manera correcta.")
-	_, _ = fmt.Fscanf(r, "%s")
-}
-
-func seeSize() {
 	extensions := []string{".txt", ".ha1", ".ha2", ".ha3", ".ha4", ".huf"}
 	var fileName string
 	r := bufio.NewReader(os.Stdin)
 	fmt.Println("Ingrese el nombre del archivo sin extension.")
 	_, _ = fmt.Fscanf(r, "%s", &fileName)
-
+	clearScreen()
 	for index := 0; index < len(extensions); index++ {
 		body, err := loadFile(fileName+extensions[index], false)
 		if err != nil {
@@ -289,7 +336,7 @@ func seeSize() {
 		} else {
 			switch extensions[index] {
 			case ".txt":
-				fmt.Print(" El archivo inicial tiene un tamaño de:", len(body), " Bytes ", " o ", (len(body))/1024, " KB")
+				fmt.Print(" El archivo original tiene un tamaño de:", len(body), " Bytes ", " o ", (len(body))/1024, " KB")
 			case ".ha1":
 				fmt.Print("\n\n Hamming 7 tiene un tamaño de: ", len(body), " Bytes ", " o ", len(body)/1024, " KB")
 			case ".ha2":
@@ -309,30 +356,7 @@ func seeSize() {
 	_, _ = fmt.Fscanf(r, "%s")
 }
 
-func Huffman() {
-	var mainOp int
-	r := bufio.NewReader(os.Stdin)
-	continue_ := true
-	for continue_ {
-		clearScreen()
-		fmt.Println("1 - Codificar")
-		fmt.Println("2 - Decodificar")
-		fmt.Println("3 - Salir")
-		mainOp = 0
-		_, _ = fmt.Fscanf(r, "%d", &mainOp)
-		_, _ = fmt.Fscanf(r, "%s")
-		switch mainOp {
-		case 1:
-			preHuffman()
-		case 2:
-			preDesHuffman()
-		case 3:
-			continue_ = false
-		}
-	}
-}
-
-func preHuffman() {
+func huffman() {
 	var fileName string
 	r := bufio.NewReader(os.Stdin)
 	clearScreen()
@@ -380,7 +404,7 @@ func preHuffman() {
 	_, _ = fmt.Fscanf(r, "%s")
 }
 
-func preDesHuffman() {
+func desHuffman() {
 	var fileName string
 	r := bufio.NewReader(os.Stdin)
 	clearScreen()
@@ -416,23 +440,14 @@ func preDesHuffman() {
 	_, _ = fmt.Fscanf(r, "%s")
 }
 
-func clearScreen() {
-	cmd := exec.Command("cmd", "/c", "cls") //Windows example, its tested
-	cmd.Stdout = os.Stdout
-	_ = cmd.Run()
-	fmt.Println("#####################################")
-	fmt.Println("_______________HAMMING_______________")
-	fmt.Println("#####################################")
-	fmt.Println()
-}
-
 func askDate() ([]byte, error) {
 	//Ask for the date
+	clearScreen()
 	r := bufio.NewReader(os.Stdin)
 	var auxDay, auxMonth, auxYear, auxHour, auxMinutes, auxSeconds string
 	var day, month, year, hour, minutes, seconds int
 	err := make([]error, 6)
-	fmt.Println("Ingrese la dia, mes, año, hora, minutos y segundos en los que quiere la decodificacin del archivo este disponible:")
+	fmt.Println("Ingrese el dia, mes, año, hora, minutos y segundos en los que quiere la decodificacin del archivo este disponible:")
 	fmt.Print("Dia: ")
 	_, _ = fmt.Fscanf(r, "%s", &auxDay)
 	_, _ = fmt.Fscanf(r, "%d")
@@ -474,5 +489,16 @@ func askDate() ([]byte, error) {
 	for i := len(unixDate); i < 10; i = len(unixDate) {
 		unixDate = append([]byte{48}, unixDate...)
 	}
+	clearScreen()
 	return unixDate, nil
+}
+
+func clearScreen() {
+	cmd := exec.Command("cmd", "/c", "cls") //Windows example, its tested
+	cmd.Stdout = os.Stdout
+	_ = cmd.Run()
+	fmt.Println("#####################################")
+	fmt.Println("___________Hamming/Huffman___________")
+	fmt.Println("#####################################")
+	fmt.Println()
 }
