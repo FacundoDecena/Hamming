@@ -2,6 +2,7 @@ package HammingCodification
 
 import (
 	"math"
+	"strconv"
 )
 
 // Receives a byte slice, returns it encoded
@@ -89,13 +90,13 @@ func Hamming(size int, file []byte) []byte {
 	switch size {
 	case 32:
 		x := callTakeBits(26, file)
-		ret = callEncode(size, x)
+		ret = callEncode(size, x, len(file))
 	case 1024:
 		x := callTakeBits(1013, file)
-		ret = callEncode(size, x)
+		ret = callEncode(size, x, len(file))
 	case 32768:
 		x := convertTo32752(file)
-		ret = callEncode(size, x)
+		ret = callEncode(size, x, len(file))
 	}
 	return ret
 }
@@ -138,15 +139,22 @@ func convertTo32752(input []byte) [][]byte {
 	return ret
 }
 
-func callEncode(size int, inputFile [][]byte) (outPut []byte) {
+func callEncode(size int, inputFile [][]byte, lenFile int) (outPut []byte) {
 	position, numberOfByte, controlBitsQuantity := initialCase(size)
 	var aux [][]byte
+	//matrix := getGeneratingMatrix(size)
 	for i := 0; i < len(inputFile); i++ {
-		aux = append(aux, encode(size, inputFile[i], position, numberOfByte, controlBitsQuantity))
+		aux = append(aux, encode(size, inputFile[i], position, numberOfByte, controlBitsQuantity /*,matrix*/))
 		for j := 0; j < len(aux[i]); j++ {
 			outPut = append(outPut, aux[i][j])
 		}
 	}
+	s := []byte(strconv.FormatInt(int64(lenFile), 10))
+	lenInput := []byte(s)
+	for i := len(lenInput); i < 10; i = len(lenInput) {
+		lenInput = append([]byte{48}, lenInput...)
+	}
+	outPut = append(outPut, lenInput...)
 	return outPut
 }
 
@@ -159,7 +167,7 @@ func encode(size int, input []byte, position int, numberOfByte int, controlBitsQ
 		il := expInt(i-1) - 1
 		for j := sl - 1; j > il; j-- {
 			dataBit := takeBit(input[numberOfByte], position, 7-int(j%8))
-			x := byteNumber(int(j), size/8)
+			x := int(j / 8)
 			encoded[x] = encoded[x] | dataBit
 			position++
 			if position > 7 {
@@ -173,51 +181,152 @@ func encode(size int, input []byte, position int, numberOfByte int, controlBitsQ
 		parity := byte(0)
 		for j := expInt(i) - 1; j < size; j += expInt(i + 1) {
 			for k := 0; k < expInt(i); k++ {
-				parity ^= takeBit(encoded[byteNumber(j+int(k), size/8)], 7-(int((j+k)%8)), 0)
+				parity ^= takeBit(encoded[int((j+k)/8)], 7-((j+k)%8), 0)
 			}
 		}
-		x := byteNumber(int(expInt(i)-1), size/8)
-		encoded[x] = encoded[x] | takeBit(parity, 0, 7-(int(expInt(i)-1)%8))
+		x := int(int(expInt(i)-1) / 8)
+		encoded[x] = encoded[x] | takeBit(parity, 0, 7-(expInt(i)-1)%8)
 	}
 	return encoded
 }
 
-//Apply a mask to a source byte to get the bit in the initial position and shifter it to the final position.
-func takeBit(source byte, initialPosition int, finalPosition int) byte {
-	var result = source & byte(expInt(initialPosition))
-	var shift = finalPosition - initialPosition
-	if shift == 0 {
-		return result
-	} else if shift > 0 {
-		return result << uint(shift)
-	} else {
-		shift *= -1
-		return result >> uint(shift)
+//Matrix implementation for encode
+/*
+func encode(size int, input []byte, position int, numberOfByte int, controlBitsQuantity int, matrix[] byte) []byte {
+	encoded := make([]byte, int(size/8))
+	controlBits := getControlBits(input,matrix,controlBitsQuantity,size)
+	//Bits accommodate process
+	for i := controlBitsQuantity - 1; i > 0; i-- {
+		sl := expInt(i) - 1
+		il := expInt(i-1) - 1
+		m := int(sl/8)
+		encoded[m] = encoded[m] | controlBits[i] << byte(7-(sl%8))
+		for j := sl - 1; j > il; j-- {
+			dataBit := takeBit(input[numberOfByte], position, 7-int(j%8))
+			x := int(j/8)
+			encoded[x] = encoded[x] | dataBit
+			position++
+			if position > 7 {
+				numberOfByte--
+				position = 0
+			}
+		}
+	}
+	encoded[0] = encoded[0] | (controlBits[0]<<7)
+	return encoded
+}
+
+func getControlBits(vector []byte,matrix []byte,controlBitsQuantity int,size int) []byte{
+	controlBits := make([]byte,controlBitsQuantity)
+	for i:=0;i<controlBitsQuantity-1;i++{
+		parity := byte(0)
+		for j:=0;j<size-controlBitsQuantity;j++{
+			x := int(int(j)/8)
+			parity ^= (vector[x] & byte(expInt(7-int(j%8))) )>> byte(7-(j%8)) & matrix[j*(controlBitsQuantity-1)+i]
+		}
+		controlBits[i]=parity
+	}
+	return controlBits
+}
+
+
+func getGeneratingMatrix(size int) []byte{
+	_,_,m :=initialCase(size)
+	matrix := make([]byte,0)
+	var column int
+	controlBit:=0
+	for row:=0;row<size-1;row++{
+		if row != expInt(controlBit)-1{
+			for column=0;column<m-1;column++ {
+				matrix = append(matrix, b2b(getBoolean(column, row)))
+			}
+			column=0
+		}else{
+			controlBit++
+		}
+	}
+	return matrix
+}
+
+func getBoolean(i int,j int) bool{
+	switch i{
+	case 0:return j%2==0
+	case 1:return j%4>=1 && j%4<=2
+	case 2:return j%8>=3 && j%8<=6
+	case 3:return j%16>=7 && j%16<=14
+	case 4:return j%32>=15 && j%32<=30
+	case 5:return j%64>=31 && j%64<=62
+	case 6:return j%128>=63 && j%128<=126
+	case 7:return j%256>=127 && j%256<=254
+	case 8:return j%512>=255 && j%512<=510
+	case 9:return j%1024>=511 && j%1024<=1022
+	case 10:return j%2048>=1023 && j%2048<=2046
+	case 11:return j%4096>=2047 && j%4096<=4094
+	case 12:return j%8192>=4095 && j%8192<=8190
+	case 13:return j%16384>=8191 && j%16384<=16382
+	case 14:return j%32768>=16383 && j%32768<=32766
+	default: return false
 	}
 }
 
-//From a bit position in a block of bytes of size bytesQuantity, returns the number of the byte which the bit belongs
-func byteNumber(bitPosition int, bytesQuantity int) int {
-	il := 0
-	sl := 7
-	for i := 0; i < bytesQuantity; i++ {
-		if bitPosition >= il && bitPosition <= sl {
-			return i
-		} else {
-			il += 8
-			sl += 8
-		}
+func b2b(b bool) byte {
+	if b{
+		return 1
 	}
 	return 0
 }
 
-func expInt(exponent int) int {
-	//My implementation for **
-	var result = 1
-	for i := 0; i < exponent; i++ {
-		result *= 2
+*/
+
+//Apply a mask to a source byte to get the bit in the initial position and shifter it to the final position.
+func takeBit(source byte, initialPosition int, finalPosition int) byte {
+	result := source & byte(expInt(initialPosition))
+	shift := finalPosition - initialPosition
+	if shift >= 0 {
+		return result << uint(shift)
+	} else {
+		return result >> uint(shift*-1)
 	}
-	return result
+}
+
+//Implementation for exponential base 2. It's faster than calculate exponential with iterations
+func expInt(exponent int) int {
+	switch exponent {
+	case 0:
+		return 1
+	case 1:
+		return 2
+	case 2:
+		return 4
+	case 3:
+		return 8
+	case 4:
+		return 16
+	case 5:
+		return 32
+	case 6:
+		return 64
+	case 7:
+		return 128
+	case 8:
+		return 256
+	case 9:
+		return 512
+	case 10:
+		return 1024
+	case 11:
+		return 2048
+	case 12:
+		return 4096
+	case 13:
+		return 8192
+	case 14:
+		return 16384
+	case 15:
+		return 32768
+	default:
+		return -1
+	}
 }
 
 func initialCase(size int) (position int, numberOfByte int, controlBitsQuantity int) {

@@ -1,4 +1,4 @@
-package Huffman
+package HuffmanCodification
 
 type Item struct {
 	Symbol byte

@@ -1,4 +1,4 @@
-package Huffman
+package HuffmanCodification
 
 func frequncies(list []byte) [256]int { // return the table of frequencies.
 

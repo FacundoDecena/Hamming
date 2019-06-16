@@ -1,14 +1,9 @@
-package Huffman
+package HuffmanCodification
 
 import (
-	"bufio"
 	"container/heap"
 	"encoding/binary"
-	"fmt"
-	"io/ioutil"
 	"math"
-	"os"
-	"os/exec"
 	"strconv"
 	"strings"
 )
@@ -19,76 +14,19 @@ type CAL struct {
 	Length       int
 }
 
-func Huffman() {
-	var mainOp int
-	r := bufio.NewReader(os.Stdin)
-	continue_ := true
-	for continue_ {
-		clearScreen()
-		fmt.Println("1 - Codificar")
-		fmt.Println("2 - Decodificar")
-		fmt.Println("3 - Salir")
-		mainOp = 0
-		_, _ = fmt.Fscanf(r, "%d", &mainOp)
-		_, _ = fmt.Fscanf(r, "%s")
-		switch mainOp {
-		case 1:
-			callHuffman()
-			fmt.Println("Huffman aplicado correctamente")
-			_, _ = fmt.Fscanf(r, "%s")
-		case 2:
-			callDeshuffman()
-			fmt.Println("Huffman descomprimido correctamente")
-			_, _ = fmt.Fscanf(r, "%s")
-		case 3:
-			continue_ = false
-		}
-	}
-}
+func CallHuffman(body []byte) ([]byte, []byte) {
+	// Init Variables
+	var listItems []*TreeNode
+	var priorityQueue PriorityQueue
+	var code []string
 
-func callHuffman() {
-	var fileName string
+	table := frequncies(body)
+	listItems = toItems(table)
+	priorityQueue = makeParva(listItems)
+	code = huffman(priorityQueue)
 
-	r := bufio.NewReader(os.Stdin)
-
-	clearScreen()
-	fmt.Println("Ingrese el nombre del archivo")
-	_, _ = fmt.Fscanf(r, "%s", &fileName)
-	//Since golang does not show the time a program runs...
-
-	body, err := loadFile(fileName)
-
-	if err != nil {
-		fmt.Println(err)
-	} else {
-		// Init Variables
-		var listItems []*TreeNode
-		var priorityQueue PriorityQueue
-		var code []string
-
-		table := frequncies(body)
-		listItems = toItems(table)
-		priorityQueue = makeParva(listItems)
-
-		code = huffman(priorityQueue)
-
-		encodedBody, dictionary := encode(body, code)
-		fileName = strings.Split(fileName, ".")[0]
-		//fileName = strings.Replace(fileName, "txt", "huf", -1)
-		fileName = fileName + ".huf"
-		err = saveFile(fileName, encodedBody)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		fileName = strings.Replace(fileName, "huf", "dic", -1)
-		err = saveFile(fileName, dictionary)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-	}
+	encodedBody, dictionary := encode(body, code)
+	return encodedBody, dictionary
 }
 
 // Function huffman receives a priority queue and do a binary tree to make the huffman codification.
@@ -151,7 +89,7 @@ func makeParva(listItems []*TreeNode) PriorityQueue {
 	return priorityQueue
 }
 
-//encode applies Huffman
+//encode applies HuffmanCodification
 func encode(body []byte, code []string) (ret []byte, dic []byte) {
 	//Create a dictionary
 	var table map[byte]CAL
@@ -200,25 +138,41 @@ func encode(body []byte, code []string) (ret []byte, dic []byte) {
 		lengthI := table[body[i]].Length
 		//Compression
 		for j := 0; j < len(codificationI); j++ {
+			if length == 8 {
+				length = 0
+			}
 			//Get the first byte
 			codeJ := codificationI[j]
 			//If the codification is not long enough keep going
 			if length+lengthI < 8 {
 				codeJ >>= uint(length)
 				tempCode = tempCode | codeJ
-				length += lengthI
+				if j == 0 {
+					length += lengthI
+				}
 			} else {
 				//Save the part that fits in the byte
 				firstPart := codeJ & ((exp(byte(8-length)) - 1) << uint(length))
 				//Save the part that does not fit in the byte
 				secondPart := codeJ & (exp(byte(length)) - 1)
 				//Complete the byte
-				tempCode = tempCode | (firstPart >> uint(length))
-				//Save the completed byte to the ret structure
-				ret = append(ret, tempCode)
-				//Take the part that did not fit the byte
-				tempCode = secondPart << uint(8-length)
-				length = length + lengthI - 8
+				if j == 0 {
+					tempCode = tempCode | (firstPart >> uint(length))
+					//Save the completed byte to the ret structure
+					ret = append(ret, tempCode)
+					//Take the part that did not fit the byte
+					tempCode = secondPart << uint(8-length)
+				} else {
+					tempCode = tempCode | (firstPart >> uint(length-8+lengthI))
+				}
+
+				if length <= 8 && j == 0 {
+					length = length + lengthI - 8
+					lengthI = length
+				} /*else {
+					length = length - lengthI + 8
+					lengthI = length
+				}*/
 			}
 		}
 	}
@@ -274,30 +228,6 @@ func toMap(table []string) map[byte]CAL {
 	}
 
 	return ret
-}
-
-func clearScreen() {
-	cmd := exec.Command("cmd", "/c", "cls") //Windows example, its tested
-	cmd.Stdout = os.Stdout
-	_ = cmd.Run()
-	fmt.Println("#####################################")
-	fmt.Println("_______________HUFFMAN_______________")
-	fmt.Println("#####################################")
-	fmt.Println()
-}
-
-func loadFile(fileName string) ([]byte, error) {
-	var err error
-	var body []byte
-	body, err = ioutil.ReadFile(fileName)
-	if err != nil {
-		return nil, err
-	}
-	return body, nil
-}
-
-func saveFile(fileName string, body []byte) error {
-	return ioutil.WriteFile(fileName, body, 0600)
 }
 
 //takeBitsHuffman

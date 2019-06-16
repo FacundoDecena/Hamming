@@ -1,4 +1,4 @@
-package Huffman
+package HuffmanCodification
 
 import (
 	"github.com/pkg/errors"
