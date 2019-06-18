@@ -1,9 +1,5 @@
 package HuffmanCodification
 
-import (
-	"fmt"
-)
-
 type Aux struct {
 	Caracter byte
 	Length   int
@@ -82,7 +78,6 @@ func stractTable(table []byte) (map[uint32]Aux, uint32) {
 		code = (uint32(arrByte[0]) << 24) + (uint32(arrByte[1]) << 16) + (uint32(arrByte[2]) << 8) + uint32(arrByte[3])
 		// making the table.
 		aux.Length = int(table[index+5])
-		fmt.Printf("codificacion del elemento de la tabla %c con longitud %d %32b\n", aux.Caracter, aux.Length, code)
 		diccionary[code] = aux
 		arrByte = nil
 	}

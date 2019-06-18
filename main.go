@@ -1,8 +1,8 @@
 package main
 
 import (
-	"./HammingCodification"
-	"./HuffmanCodification"
+	"Hamming/HammingCodification"
+	"Hamming/HuffmanCodification"
 	"bufio"
 	"fmt"
 	"github.com/pkg/errors"
