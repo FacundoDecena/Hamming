@@ -1,14 +1,14 @@
 package main
 
 import (
-	"Hamming/HammingCodification"
-	"Hamming/HuffmanCodification"
+	"./HammingCodification"
+	"./HuffmanCodification"
 	"bufio"
 	"fmt"
-	"github.com/pkg/errors"
 	"log"
 	"os"
 	"os/exec"
+	"src/github.com/pkg/errors"
 	"strconv"
 	"strings"
 	"time"
@@ -422,6 +422,7 @@ func huffman() {
 		_, _ = fmt.Fscanf(r, "%s")
 		return
 	} else {
+		fmt.Printf("%8b", body)
 		encodedBody, dictionary := HuffmanCodification.CallHuffman(body)
 		dictionary = append(dictionary, unixDate...)
 		fileName = strings.Split(fileName, ".")[0]

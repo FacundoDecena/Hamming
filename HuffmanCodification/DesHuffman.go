@@ -29,16 +29,15 @@ func Deshuffman(bodyCoded []byte, table []byte) (originalBody []byte) {
 			length++
 			numberOfShift++
 			if diccionary[integer].Length == length {
-				if diccionary[integer].Caracter != 0 {
-					// Element found.
-					result = diccionary[integer].Caracter
-					originalBody = append(originalBody, result)
-					bait = bait << uint(bitsTakenFromAByte)
-					bitsTakenFromAByte = 0
-					integer = 0
-					length = 0
-					numberOfShift = 0
-				}
+				// Element found.
+				result = diccionary[integer].Caracter
+				originalBody = append(originalBody, result)
+				bait = bait << uint(bitsTakenFromAByte)
+				bitsTakenFromAByte = 0
+				integer = 0
+				length = 0
+				numberOfShift = 0
+
 			}
 		}
 		bitsTakenFromAByte = 0
